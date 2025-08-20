@@ -12,3 +12,10 @@ theme = 'binario'
   vk = true
   pocket = false
   pinterest = false
+
+[Params.Social]
+  email = "philip@philipwoldhek.nl"
+  twitter = "WoldHack"
+  linkedin = "philip-woldhek"
+  github = "11philip22"
+  stackoverflow = "11783384"

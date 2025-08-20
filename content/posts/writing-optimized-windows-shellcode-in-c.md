@@ -4,7 +4,6 @@ draft = true
 title = 'Writing Optimized Windows Shellcode in C '
 +++
 
-Stolen/Compiled by Philip
 ## Introduction
 Since the original article describing this technique was taken down for unknown reason, I felt the need to "steal" it because i find this shellcode writing technique extremely usefull.  
 You can still read the original article here: https://web.archive.org/web/20210305190309/http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html  
