@@ -9,6 +9,7 @@ featured:
 ---
 
 Here at WoldTech we hate monolitic compilers. Thats why we exclusively use the llvm compiler infrastructure as our build toolchain.  
+In this post I will explain on how to integrate llvm with visual studio
 
 <!--more-->
   
