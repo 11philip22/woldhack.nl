@@ -1,6 +1,6 @@
 ---
 date: "2025-08-20T11:59:13+02:00"
-draft: true
+draft: false
 title: "Section Code Injection"
 
 featured:

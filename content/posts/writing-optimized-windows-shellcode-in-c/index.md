@@ -1,6 +1,6 @@
 ---
 date: "2025-08-20T11:50:11+02:00"
-draft: true
+draft: false
 title: "Writing Optimized Windows Shellcode in C"
 
 featured:

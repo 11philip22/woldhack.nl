@@ -1,6 +1,6 @@
 ---
 date: "2025-08-20T12:00:40+02:00"
-draft: true
+draft: false
 title: "Compiling LLVM with visual studio"
 
 featured:
