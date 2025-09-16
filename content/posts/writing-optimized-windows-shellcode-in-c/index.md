@@ -1,13 +1,18 @@
-+++
-date = '2025-08-20T11:50:11+02:00'
-draft = true
-title = 'Writing Optimized Windows Shellcode in C '
-+++
+---
+date: "2025-08-20T11:50:11+02:00"
+draft: true
+title: "Writing Optimized Windows Shellcode in C"
 
-## Introduction
+featured:
+  previewOnly: true # show only preview image (true/false)
+  credit: https://x.com/sssirxn
+---
+
 Since the original article describing this technique was taken down for unknown reason, I felt the need to "steal" it because i find this shellcode writing technique extremely usefull.  
 You can still read the original article here: https://web.archive.org/web/20210305190309/http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html  
 http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html
+
+<!--more-->
 
 ## Benefits
 There are several benefits of writing your shellcode using this method.  

@@ -1,11 +1,17 @@
-+++
-date = '2025-08-20T11:59:13+02:00'
-draft = true
-title = 'Section Code Injection'
-+++
+---
+date: "2025-08-20T11:59:13+02:00"
+draft: true
+title: "Section Code Injection"
+
+featured:
+  previewOnly: true # show only preview image (true/false)
+  credit: https://x.com/sssirxn
+---
 
 ## Introduction
 A section object represents a section of memory that can be shared. A process can use a section object to share parts of its memory address space with other processes. Each memory section has one or more corresponding views. A view of a section is a part of the section that is actually visible to a process. The act of creating a view for a section is known as mapping a view of the section.  
+
+<!--more-->
   
 In this post we will be using the following NTAPI functions.  
 Documentation for these functions can be found at http://undocumented.ntinternals.net/
