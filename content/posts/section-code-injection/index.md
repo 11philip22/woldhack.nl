@@ -8,7 +8,6 @@ featured:
   credit: https://x.com/sssirxn
 ---
 
-## Introduction
 A section object represents a section of memory that can be shared. A process can use a section object to share parts of its memory address space with other processes. Each memory section has one or more corresponding views. A view of a section is a part of the section that is actually visible to a process. The act of creating a view for a section is known as mapping a view of the section.  
 
 <!--more-->
@@ -80,6 +79,7 @@ PVOID pLocalSectionAddress = NULL;
 ntStatus = pNtMapViewOfSection(hSection, GetCurrentProcess(), &pLocalSectionAddress, 0, 0, NULL, &dwReqBufSize, 2, 0, PAGE_READWRITE);
 if (!NT_SUCCESS(ntStatus)) {
 	return ntStatus;
+}
 ```
 
 For our target process we are gonna open `notepad.exe` and get its handle.
