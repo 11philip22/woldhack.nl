@@ -18,4 +18,23 @@ theme = 'binario'
   twitter = "WoldHack"
   linkedin = "philip-woldhek"
   github = "11philip22"
-  stackoverflow = "11783384"
+
+[menu]
+  [[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = 1
+
+  [[menu.main]]
+    name = "Tools"
+    url = "/tools/"
+    weight = 2
+
+[markup.goldmark.renderer]
+unsafe = true
+
+[markup]
+  [markup.highlight]
+    style = "native"             # Choose a theme (e.g., monokai, dracula, github, etc.)
+    lineNos = false              # Enable line numbers (optional)
+    lineNumbersInTable = false   # Makes line numbers cleaner (optional)

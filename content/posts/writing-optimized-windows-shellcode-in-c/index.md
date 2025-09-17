@@ -357,7 +357,6 @@ Thats why we use this script that parses the map file which contains the actual 
 
 https://github.com/mattifestation/PIC_Bindshell/blob/master/PIC_Bindshell/Out-Shellcode.ps1
 <details><summary>Click to expand!</summary>
-<p>
 
 ```ps1
 Param (
@@ -400,13 +399,11 @@ Write-Host "Shellcode length: 0x$(($ShellcodeLength + 1).ToString('X4'))"
 [IO.File]::WriteAllBytes($OutputFile, $TextSection.RawData[0..$ShellcodeLength])
 ```
 
-</p>
 </details>  
 
-https://github.com/mattifestation/PIC_Bindshell/blob/master/PIC_Bindshell/Get-PEHeader.ps1  
+https://github.com/mattifestation/PIC_Bindshell/blob/master/PIC_Bindshell/Get-PEHeader.ps1
 
 <details><summary>Click to expand!</summary>
-<p>
 
 ```ps1
 function Get-PEHeader
@@ -1373,7 +1370,6 @@ PROCESS {
 }
 ```
 
-</p>
 </details>
 
 ## References 
