@@ -1,4 +1,10 @@
-# The Tools I use
+---
+draft: false
+title: "The Tools I use"
+
+featured:
+  previewOnly: true # show only preview image (true/false)
+---
 
 ### Electronics
 - [Fluke 175 tue rms multimeter](https://www.fluke.com/nl-nl/product/elektrische-test-en-meetinstrumenten/digitale-multimeters/fluke-175)

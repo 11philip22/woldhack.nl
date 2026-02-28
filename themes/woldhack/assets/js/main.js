@@ -35,9 +35,61 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initThemeToggle, { once: true });
-  } else {
+  function initClickableCards() {
+    var cards = document.querySelectorAll(".content-card[data-card-href]");
+    if (!cards.length) {
+      return;
+    }
+
+    var interactiveSelector = "a, button, input, textarea, select, label, summary, [role='button']";
+
+    var navigate = function (card) {
+      var href = card.getAttribute("data-card-href");
+      if (href) {
+        window.location.href = href;
+      }
+    };
+
+    cards.forEach(function (card) {
+      card.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button !== 0) {
+          return;
+        }
+
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+
+        if (event.target && event.target.closest(interactiveSelector)) {
+          return;
+        }
+
+        navigate(card);
+      });
+
+      card.addEventListener("keydown", function (event) {
+        if (event.defaultPrevented || (event.key !== "Enter" && event.key !== " ")) {
+          return;
+        }
+
+        if (event.target && event.target !== card && event.target.closest(interactiveSelector)) {
+          return;
+        }
+
+        event.preventDefault();
+        navigate(card);
+      });
+    });
+  }
+
+  function init() {
     initThemeToggle();
+    initClickableCards();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
   }
 })();

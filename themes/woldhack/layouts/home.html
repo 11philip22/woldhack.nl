@@ -1,8 +1,10 @@
 {{ define "main" }}
+  {{ $postsPages := where site.RegularPages "Section" "posts" }}
+
   <section class="panel hero-panel">
     <div class="panel-head">
       <p class="panel-label">Overview</p>
-      <span class="panel-meta">{{ len site.RegularPages }} entries</span>
+      <span class="panel-meta">{{ len $postsPages }} entries</span>
     </div>
     <h1 class="hero-title">{{ site.Title }}</h1>
     {{ with .Content }}
@@ -15,14 +17,14 @@
       <p class="panel-label">Latest Posts</p>
     </div>
     <div class="card-grid">
-      {{ range site.RegularPages.ByDate.Reverse }}
-        <article class="content-card">
+      {{ range $postsPages.ByDate.Reverse }}
+        <article class="content-card" data-card-href="{{ .RelPermalink }}" tabindex="0">
           {{ if not .Date.IsZero }}
             {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
             {{ $dateHuman := .Date | time.Format ":date_long" }}
             <time class="card-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
           {{ end }}
-          <h2 class="card-title"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+          <h2 class="card-title"><a class="card-title-link" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
           {{ with .Summary }}
             <div class="card-summary">{{ . }}</div>
           {{ end }}

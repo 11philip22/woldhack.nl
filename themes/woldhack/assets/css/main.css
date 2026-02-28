@@ -251,14 +251,31 @@ a:focus-visible {
 }
 
 .content-card {
+  position: relative;
   background: var(--panel-bg);
   padding: 14px 16px;
   border: 1px solid transparent;
   transition: border-color 0.12s ease;
 }
 
-.content-card:hover {
+.content-card[data-card-href] {
+  cursor: pointer;
+}
+
+.content-card:hover,
+.content-card:focus-within,
+.content-card:focus-visible {
   border-color: var(--accent);
+}
+
+.card-title-link {
+  color: inherit;
+}
+
+.content-card:hover .card-title-link,
+.content-card:focus-within .card-title-link,
+.content-card:focus-visible .card-title-link {
+  color: var(--accent);
 }
 
 .card-meta {
@@ -599,4 +616,8 @@ a:focus-visible {
     gap: 4px;
   }
 }
+
+
+
+
 
