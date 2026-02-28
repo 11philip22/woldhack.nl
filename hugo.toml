@@ -1,7 +1,7 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
 title = 'WoldTech'
-theme = 'binario'
+theme = 'woldhack'
 
 [Params.Share]
   facebook = true
