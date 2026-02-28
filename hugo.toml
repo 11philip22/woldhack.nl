@@ -1,6 +1,6 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
-title = 'WoldTech'
+title = 'woldhack'
 theme = 'woldhack'
 
 [Params.Share]
@@ -32,6 +32,10 @@ theme = 'woldhack'
   [[menu.main]]
     name = "Posts"
     url = "/posts/"
+    weight = 3
+  [[menu.main]]
+    name = "Projects"
+    url = "/projects/"
     weight = 3
 
 [markup.goldmark.renderer]

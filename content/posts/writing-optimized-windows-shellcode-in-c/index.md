@@ -2,10 +2,6 @@
 date: "2025-08-20T11:50:11+02:00"
 draft: false
 title: "Writing Optimized Windows Shellcode in C"
-
-featured:
-  previewOnly: true # show only preview image (true/false)
-  credit: https://x.com/sssirxn
 ---
 
 Since the original article describing this technique was taken down for unknown reason, I felt the need to "steal" it because i find this shellcode writing technique extremely usefull.  
