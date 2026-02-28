@@ -206,6 +206,7 @@ a:focus-visible {
   border: 1px solid var(--panel-border);
   background: var(--panel-bg);
   padding: 16px;
+  min-width: 0;
 }
 
 .panel-head {
@@ -467,6 +468,7 @@ body.is-light .content-card .card-scan-bg {
 .article-content .highlight {
   border: 1px solid var(--code-border);
   background: var(--code-bg);
+  max-width: 100%;
 }
 
 .rich-content .highlight pre,
@@ -481,6 +483,9 @@ body.is-light .content-card .card-scan-bg {
   border: 0;
   background: var(--code-bg) !important;
   color: var(--code-text) !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .rich-content .highlight pre code,
@@ -687,6 +692,8 @@ body.is-light .content-card .card-scan-bg {
     gap: 4px;
   }
 }
+
+
 
 
 
