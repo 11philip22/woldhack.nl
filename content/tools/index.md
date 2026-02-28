@@ -1,6 +1,6 @@
 ---
 draft: false
-title: "The Tools I use"
+title: "The tools I use"
 
 featured:
   previewOnly: true # show only preview image (true/false)
