@@ -1,0 +1,38 @@
+{{ $thumb := .Resources.GetMatch "*thumbnail*" }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*cover*" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*featured*" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.webp" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.jpg" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.jpeg" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.png" }}{{ end }}
+{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.avif" }}{{ end }}
+
+{{ $thumbURL := "" }}
+{{ with $thumb }}{{ $thumbURL = .RelPermalink }}{{ end }}
+{{ if not $thumbURL }}{{ with .Params.thumbnail }}{{ $thumbURL = . }}{{ end }}{{ end }}
+{{ if not $thumbURL }}{{ with .Params.image }}{{ $thumbURL = . }}{{ end }}{{ end }}
+
+<article class="content-card" data-card-href="{{ .RelPermalink }}" tabindex="0">
+  <div class="card-content">
+    {{ if not .Date.IsZero }}
+      {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+      {{ $dateHuman := .Date | time.Format ":date_long" }}
+      <time class="card-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
+    {{ end }}
+    <h2 class="card-title"><a class="card-title-link" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+    {{ with .Summary }}
+      <div class="card-summary">{{ . }}</div>
+    {{ end }}
+  </div>
+
+  <div class="card-media{{ if not $thumbURL }} card-media-empty{{ end }}">
+    {{ if $thumbURL }}
+      <img src="{{ $thumbURL }}" alt="{{ .LinkTitle }}" loading="lazy" decoding="async">
+    {{ else }}
+      <canvas class="card-media-scan" aria-hidden="true"></canvas>
+      <div class="card-media-placeholder">No image</div>
+    {{ end }}
+  </div>
+</article>
+
+

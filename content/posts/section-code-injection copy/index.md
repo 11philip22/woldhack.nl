@@ -4,7 +4,7 @@ draft: false
 title: "Section Code Injection2"
 
 featured:
-  previewOnly: true # show only preview image (true/false)
+  previewOnly: false # show only preview image (true/false)
   credit: https://x.com/sssirxn
 ---
 

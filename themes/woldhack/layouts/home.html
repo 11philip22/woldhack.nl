@@ -18,17 +18,7 @@
     </div>
     <div class="card-grid">
       {{ range $postsPages.ByDate.Reverse }}
-        <article class="content-card" data-card-href="{{ .RelPermalink }}" tabindex="0">
-          {{ if not .Date.IsZero }}
-            {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
-            {{ $dateHuman := .Date | time.Format ":date_long" }}
-            <time class="card-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
-          {{ end }}
-          <h2 class="card-title"><a class="card-title-link" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-          {{ with .Summary }}
-            <div class="card-summary">{{ . }}</div>
-          {{ end }}
-        </article>
+        {{ partial "post-card.html" . }}
       {{ end }}
     </div>
   </section>
