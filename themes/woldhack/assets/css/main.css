@@ -264,9 +264,7 @@ body.is-light .hero-panel .void-bg {
 .card-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1px;
-  border: 1px solid var(--panel-border);
-  background: var(--panel-border);
+  gap: 10px;
 }
 
 .content-card {
@@ -277,7 +275,7 @@ body.is-light .hero-panel .void-bg {
   align-items: stretch;
   background: var(--panel-bg);
   padding: 16px;
-  border: 1px solid transparent;
+  border: 1px solid var(--panel-border);
   transition: border-color 0.12s ease;
   overflow: hidden;
 }
@@ -689,6 +687,9 @@ body.is-light .content-card .card-scan-bg {
     gap: 4px;
   }
 }
+
+
+
 
 
 
