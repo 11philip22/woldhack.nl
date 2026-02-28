@@ -1,7 +1,23 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
-  {{ .Content }}
-  {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-  {{ end }}
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <p class="panel-label">Taxonomy</p>
+      <span class="panel-meta">{{ len .Data.Terms }} terms</span>
+    </div>
+    <h1 class="hero-title">{{ .Title }}</h1>
+    {{ with .Content }}
+      <div class="rich-content">{{ . }}</div>
+    {{ end }}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="panel-label">Browse</p>
+    </div>
+    <div class="tag-list">
+      {{ range .Data.Terms.Alphabetical }}
+        <a class="tag-chip" href="{{ .Page.RelPermalink }}">{{ .Page.LinkTitle }} ({{ .Count }})</a>
+      {{ end }}
+    </div>
+  </section>
 {{ end }}

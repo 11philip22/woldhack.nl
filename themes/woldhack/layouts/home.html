@@ -1,9 +1,33 @@
 {{ define "main" }}
-  {{ .Content }}
-  {{ range site.RegularPages }}
-    <section>
-      <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-      {{ .Summary }}
-    </section>
-  {{ end }}
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <p class="panel-label">Overview</p>
+      <span class="panel-meta">{{ len site.RegularPages }} entries</span>
+    </div>
+    <h1 class="hero-title">{{ site.Title }}</h1>
+    {{ with .Content }}
+      <div class="rich-content">{{ . }}</div>
+    {{ end }}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="panel-label">Latest Posts</p>
+    </div>
+    <div class="card-grid">
+      {{ range site.RegularPages.ByDate.Reverse }}
+        <article class="content-card">
+          {{ if not .Date.IsZero }}
+            {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+            {{ $dateHuman := .Date | time.Format ":date_long" }}
+            <time class="card-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
+          {{ end }}
+          <h2 class="card-title"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+          {{ with .Summary }}
+            <div class="card-summary">{{ . }}</div>
+          {{ end }}
+        </article>
+      {{ end }}
+    </div>
+  </section>
 {{ end }}

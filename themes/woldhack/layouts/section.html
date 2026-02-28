@@ -1,10 +1,33 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
-  {{ .Content }}
-  {{ range .Pages }}
-    <section>
-      <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-      {{ .Summary }}
-    </section>
-  {{ end }}
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <p class="panel-label">Section</p>
+      <span class="panel-meta">{{ len .Pages }} entries</span>
+    </div>
+    <h1 class="hero-title">{{ .Title }}</h1>
+    {{ with .Content }}
+      <div class="rich-content">{{ . }}</div>
+    {{ end }}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="panel-label">Entries</p>
+    </div>
+    <div class="card-grid">
+      {{ range .Pages.ByDate.Reverse }}
+        <article class="content-card">
+          {{ if not .Date.IsZero }}
+            {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+            {{ $dateHuman := .Date | time.Format ":date_long" }}
+            <time class="card-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
+          {{ end }}
+          <h2 class="card-title"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+          {{ with .Summary }}
+            <div class="card-summary">{{ . }}</div>
+          {{ end }}
+        </article>
+      {{ end }}
+    </div>
+  </section>
 {{ end }}

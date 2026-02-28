@@ -1,2 +1,8 @@
-<h1>{{ site.Title }}</h1>
+<div class="brand-row">
+  <a class="site-title" href="{{ "/" | relLangURL }}">{{ site.Title }}</a>
+  <div class="header-tools">
+    <span class="site-meta">WOLDHACK THEME</span>
+    <button type="button" class="theme-toggle" data-theme-toggle>LIGHT MODE</button>
+  </div>
+</div>
 {{ partial "menu.html" (dict "menuID" "main" "page" .) }}

@@ -3,15 +3,23 @@
 <head>
   {{ partial "head.html" . }}
 </head>
-<body>
-  <header>
-    {{ partial "header.html" . }}
-  </header>
-  <main>
-    {{ block "main" . }}{{ end }}
-  </main>
-  <footer>
-    {{ partial "footer.html" . }}
-  </footer>
+<body class="woldhack-theme">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-wrap">
+        {{ partial "header.html" . }}
+      </div>
+    </header>
+    <main class="site-main">
+      <div class="site-wrap">
+        {{ block "main" . }}{{ end }}
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="site-wrap">
+        {{ partial "footer.html" . }}
+      </div>
+    </footer>
+  </div>
 </body>
 </html>

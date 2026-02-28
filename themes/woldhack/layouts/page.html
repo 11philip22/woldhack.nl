@@ -1,10 +1,19 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
+  <article class="panel article-panel">
+    <header class="article-header">
+      <p class="panel-label">{{ if .Section }}{{ upper .Section }}{{ else }}PAGE{{ end }}</p>
+      <h1 class="hero-title">{{ .Title }}</h1>
+      {{ if not .Date.IsZero }}
+        {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+        {{ $dateHuman := .Date | time.Format ":date_long" }}
+        <time class="panel-meta" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
+      {{ end }}
+    </header>
 
-  {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
-  {{ $dateHuman := .Date | time.Format ":date_long" }}
-  <time datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
+    <div class="rich-content article-content">
+      {{ .Content }}
+    </div>
 
-  {{ .Content }}
-  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+    {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+  </article>
 {{ end }}
