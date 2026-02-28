@@ -10,66 +10,6 @@
     );
   }
 
-  function createScanSeed() {
-    return {
-      offsetX: Math.random() * 1800,
-      offsetY: Math.random() * 1800,
-      phase: Math.random() * 100,
-    };
-  }
-
-  function drawScan(ctx, width, height, isLight, seed) {
-    var lineGap = 4;
-    var baseV = isLight ? 72 : 48;
-    var y;
-
-    for (y = 1; y < height; y += lineGap) {
-      var yWave = noise(seed.phase * 0.01, (y + seed.offsetY) * 0.07);
-      var alpha = isLight ? 0.12 + yWave * 0.03 : 0.18 + yWave * 0.04;
-      ctx.strokeStyle = "rgba(" + baseV + "," + baseV + "," + baseV + "," + Math.max(0.08, alpha).toFixed(3) + ")";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-
-      var drawing = true;
-      var segmentStart = 0;
-      var x;
-      for (x = 0; x <= width; x += 8) {
-        var jitter = noise((x + seed.offsetX) * 0.042 + 3.8, (y + seed.offsetY) * 0.08 - 2.1);
-        var lineY = y + jitter * 0.7;
-        var dropout = noise((x + seed.offsetX) * 0.08 + 14.5, (y + seed.offsetY) * 0.22 + 7.1);
-        var shouldDraw = dropout > -0.56;
-
-        if (shouldDraw && !drawing) {
-          drawing = true;
-          segmentStart = x;
-        } else if (!shouldDraw && drawing) {
-          drawing = false;
-          ctx.moveTo(segmentStart, lineY);
-          ctx.lineTo(x, lineY);
-        }
-      }
-
-      if (drawing) {
-        var endJitter = noise((width + seed.offsetX) * 0.042 + 3.8, (y + seed.offsetY) * 0.08 - 2.1);
-        var endY = y + endJitter * 0.7;
-        ctx.moveTo(segmentStart, endY);
-        ctx.lineTo(width, endY);
-      }
-      ctx.stroke();
-    }
-
-    var i;
-    for (i = 0; i < 3; i++) {
-      var yy = Math.round((i + 1) * (height / 4) + noise(i * 3.1 + seed.phase, 4.8) * 8);
-      var v = isLight ? 96 : 66;
-      ctx.strokeStyle = "rgba(" + v + "," + v + "," + v + "," + (isLight ? "0.12" : "0.16") + ")";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, yy + 0.5);
-      ctx.lineTo(width, yy + 0.5);
-      ctx.stroke();
-    }
-  }
   function createVoidSeed() {
     return {
       voidOffsetA: Math.random() * 1800,
@@ -264,60 +204,6 @@
     document.addEventListener("woldhack-theme-change", drawAll);
   }
 
-  function renderCardScan(cardMedia) {
-    var rect = cardMedia.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-      return;
-    }
-
-    var canvas = cardMedia.querySelector(".card-media-scan");
-    if (!canvas) {
-      return;
-    }
-
-    if (!cardMedia._scanSeed) {
-      cardMedia._scanSeed = createScanSeed();
-    }
-
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var width = Math.max(1, Math.round(rect.width));
-    var height = Math.max(1, Math.round(rect.height));
-
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = width + "px";
-    canvas.style.height = height + "px";
-
-    var ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-
-    var isLight = document.body.classList.contains("is-light");
-    drawScan(ctx, width, height, isLight, cardMedia._scanSeed);
-  }
-
-  function initCardScans() {
-    var scanCards = document.querySelectorAll(".card-media-empty");
-    if (!scanCards.length) {
-      return;
-    }
-
-    var drawAll = function () {
-      scanCards.forEach(function (cardMedia) {
-        renderCardScan(cardMedia);
-      });
-    };
-
-    drawAll();
-
-    var resizeTimer;
-    window.addEventListener("resize", function () {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(drawAll, 120);
-    });
-
-    document.addEventListener("woldhack-theme-change", drawAll);
-  }
   function initThemeToggle() {
     var body = document.body;
     var toggle = document.querySelector("[data-theme-toggle]");
@@ -403,7 +289,6 @@
   function init() {
     initThemeToggle();
     initVoidPanels();
-    initCardScans();
     initClickableCards();
   }
 
@@ -413,7 +298,3 @@
     init();
   }
 })();
-
-
-
-

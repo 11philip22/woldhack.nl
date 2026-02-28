@@ -1,3 +1,10 @@
+{{ $showMedia := true }}
+{{ with .Params.featured }}
+  {{ if isset . "previewOnly" }}
+    {{ $showMedia = .previewOnly }}
+  {{ end }}
+{{ end }}
+
 {{ $thumb := .Resources.GetMatch "*thumbnail*" }}
 {{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*cover*" }}{{ end }}
 {{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*featured*" }}{{ end }}
@@ -12,7 +19,9 @@
 {{ if not $thumbURL }}{{ with .Params.thumbnail }}{{ $thumbURL = . }}{{ end }}{{ end }}
 {{ if not $thumbURL }}{{ with .Params.image }}{{ $thumbURL = . }}{{ end }}{{ end }}
 
-<article class="content-card" data-card-href="{{ .RelPermalink }}" tabindex="0">
+{{ $hasMedia := and $showMedia (ne $thumbURL "") }}
+
+<article class="content-card{{ if not $hasMedia }} content-card-no-media{{ end }}" data-card-href="{{ .RelPermalink }}" tabindex="0">
   <div class="card-content">
     {{ if not .Date.IsZero }}
       {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
@@ -25,14 +34,9 @@
     {{ end }}
   </div>
 
-  <div class="card-media{{ if not $thumbURL }} card-media-empty{{ end }}">
-    {{ if $thumbURL }}
+  {{ if $hasMedia }}
+    <div class="card-media">
       <img src="{{ $thumbURL }}" alt="{{ .LinkTitle }}" loading="lazy" decoding="async">
-    {{ else }}
-      <canvas class="card-media-scan" aria-hidden="true"></canvas>
-      <div class="card-media-placeholder">No image</div>
-    {{ end }}
-  </div>
+    </div>
+  {{ end }}
 </article>
-
-

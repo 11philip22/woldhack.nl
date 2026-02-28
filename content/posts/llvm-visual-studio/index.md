@@ -2,10 +2,6 @@
 date: "2025-08-20T12:00:40+02:00"
 draft: false
 title: "Compiling LLVM with visual studio"
-
-featured:
-  previewOnly: true # show only preview image (true/false)
-  credit: https://x.com/de5imulate
 ---
 
 Here at WoldTech we hate monolitic compilers. Thats why we exclusively use the llvm compiler infrastructure as our build toolchain.  
