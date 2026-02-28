@@ -1,6 +1,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
+<script>
+(function () {
+  try {
+    var key = "woldhack-theme-mode";
+    var saved = window.localStorage.getItem(key);
+    var prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    var useLight = saved ? saved === "light" : prefersLight;
+    if (useLight) {
+      document.documentElement.classList.add("is-light");
+    }
+  } catch (e) {
+    /* no-op */
+  }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">

@@ -346,19 +346,24 @@
 
   function initThemeToggle() {
     var body = document.body;
+    var root = document.documentElement;
     var toggle = document.querySelector("[data-theme-toggle]");
 
-    if (!body || !toggle) {
+    if (!body) {
       return;
     }
 
     var updateToggleLabel = function (mode) {
+      if (!toggle) {
+        return;
+      }
       toggle.textContent = mode === "light" ? "DARK MODE" : "LIGHT MODE";
       toggle.setAttribute("aria-label", "Switch to " + (mode === "light" ? "dark" : "light") + " mode");
     };
 
     var setMode = function (mode, persist) {
       var isLight = mode === "light";
+      root.classList.toggle("is-light", isLight);
       body.classList.toggle("is-light", isLight);
       updateToggleLabel(mode);
       if (persist) {
@@ -373,10 +378,12 @@
 
     setMode(initialMode, false);
 
-    toggle.addEventListener("click", function () {
-      var nextMode = body.classList.contains("is-light") ? "dark" : "light";
-      setMode(nextMode, true);
-    });
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        var nextMode = body.classList.contains("is-light") ? "dark" : "light";
+        setMode(nextMode, true);
+      });
+    }
   }
 
   function initClickableCards() {
@@ -439,6 +446,3 @@
     init();
   }
 })();
-
-
-

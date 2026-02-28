@@ -41,7 +41,8 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-body.is-light {
+body.is-light,
+html.is-light body {
   --page-bg: #e8e7e0;
   --panel-bg: #edece5;
   --panel-border: #c8c6be;
@@ -251,7 +252,8 @@ a:focus-visible {
   opacity: 0.55;
 }
 
-body.is-light .hero-panel .void-bg {
+body.is-light .hero-panel .void-bg,
+html.is-light .hero-panel .void-bg {
   opacity: 0.72;
 }
 
@@ -301,7 +303,8 @@ body.is-light .hero-panel .void-bg {
   opacity: 0.42;
 }
 
-body.is-light .content-card .card-scan-bg {
+body.is-light .content-card .card-scan-bg,
+html.is-light .content-card .card-scan-bg {
   opacity: 0.56;
 }
 .content-card[data-card-href] {
@@ -692,25 +695,3 @@ body.is-light .content-card .card-scan-bg {
     gap: 4px;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
