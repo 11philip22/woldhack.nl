@@ -279,12 +279,32 @@ body.is-light .hero-panel .void-bg {
   padding: 16px;
   border: 1px solid transparent;
   transition: border-color 0.12s ease;
+  overflow: hidden;
 }
 
 .content-card-no-media {
   grid-template-columns: 1fr;
 }
 
+.content-card > :not(.card-scan-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.card-scan-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.42;
+}
+
+body.is-light .content-card .card-scan-bg {
+  opacity: 0.56;
+}
 .content-card[data-card-href] {
   cursor: pointer;
 }
@@ -669,6 +689,8 @@ body.is-light .hero-panel .void-bg {
     gap: 4px;
   }
 }
+
+
 
 
 

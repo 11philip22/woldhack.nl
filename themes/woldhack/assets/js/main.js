@@ -9,6 +9,67 @@
       Math.cos(x * 2.3 + y * 0.9 + 1.1) * 0.15
     );
   }
+  function createCardScanSeed() {
+    return {
+      offsetX: Math.random() * 1800,
+      offsetY: Math.random() * 1800,
+      phase: Math.random() * 100,
+    };
+  }
+
+  function drawScanPattern(ctx, width, height, isLight, seed) {
+    var lineGap = 4;
+    var baseV = isLight ? 72 : 48;
+    var y;
+
+    for (y = 1; y < height; y += lineGap) {
+      var yWave = noise(seed.phase * 0.01, (y + seed.offsetY) * 0.07);
+      var alpha = isLight ? 0.12 + yWave * 0.03 : 0.18 + yWave * 0.04;
+      ctx.strokeStyle = "rgba(" + baseV + "," + baseV + "," + baseV + "," + Math.max(0.08, alpha).toFixed(3) + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+
+      var drawing = true;
+      var segmentStart = 0;
+      var x;
+      for (x = 0; x <= width; x += 8) {
+        var jitter = noise((x + seed.offsetX) * 0.042 + 3.8, (y + seed.offsetY) * 0.08 - 2.1);
+        var lineY = y + jitter * 0.7;
+        var dropout = noise((x + seed.offsetX) * 0.08 + 14.5, (y + seed.offsetY) * 0.22 + 7.1);
+        var shouldDraw = dropout > -0.56;
+
+        if (shouldDraw && !drawing) {
+          drawing = true;
+          segmentStart = x;
+        } else if (!shouldDraw && drawing) {
+          drawing = false;
+          ctx.moveTo(segmentStart, lineY);
+          ctx.lineTo(x, lineY);
+        }
+      }
+
+      if (drawing) {
+        var endJitter = noise((width + seed.offsetX) * 0.042 + 3.8, (y + seed.offsetY) * 0.08 - 2.1);
+        var endY = y + endJitter * 0.7;
+        ctx.moveTo(segmentStart, endY);
+        ctx.lineTo(width, endY);
+      }
+      ctx.stroke();
+    }
+
+    var i;
+    for (i = 0; i < 3; i++) {
+      var yy = Math.round((i + 1) * (height / 4) + noise(i * 3.1 + seed.phase, 4.8) * 8);
+      var v = isLight ? 96 : 66;
+      ctx.strokeStyle = "rgba(" + v + "," + v + "," + v + "," + (isLight ? "0.12" : "0.16") + ")";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, yy + 0.5);
+      ctx.lineTo(width, yy + 0.5);
+      ctx.stroke();
+    }
+  }
+
 
   function createVoidSeed() {
     return {
@@ -203,6 +264,85 @@
 
     document.addEventListener("woldhack-theme-change", drawAll);
   }
+  function renderEntryCardScan(card) {
+    var rect = card.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    var canvas = card.querySelector(".card-scan-bg");
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvas.className = "card-scan-bg";
+      canvas.setAttribute("aria-hidden", "true");
+      card.insertBefore(canvas, card.firstChild);
+    }
+
+    if (!card._scanSeed) {
+      card._scanSeed = createCardScanSeed();
+    }
+
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var width = Math.max(1, Math.round(rect.width));
+    var height = Math.max(1, Math.round(rect.height));
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    var isLight = document.body.classList.contains("is-light");
+    drawScanPattern(ctx, width, height, isLight, card._scanSeed);
+  }
+
+  function initEntryCardScans() {
+    var cards = Array.prototype.slice.call(document.querySelectorAll(".content-card"));
+    if (!cards.length) {
+      return;
+    }
+
+    var drawCard = function (card) {
+      renderEntryCardScan(card);
+    };
+
+    var drawAll = function () {
+      cards.forEach(drawCard);
+    };
+
+    drawAll();
+
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(drawAll, 120);
+    });
+
+    if (typeof ResizeObserver !== "undefined") {
+      var cardObserver = new ResizeObserver(function (entries) {
+        entries.forEach(function (entry) {
+          drawCard(entry.target);
+        });
+      });
+
+      cards.forEach(function (card) {
+        cardObserver.observe(card);
+      });
+    }
+
+    cards.forEach(function (card) {
+      Array.prototype.forEach.call(card.querySelectorAll("img"), function (img) {
+        img.addEventListener("load", function () {
+          drawCard(card);
+        });
+      });
+    });
+
+    setTimeout(drawAll, 80);
+    document.addEventListener("woldhack-theme-change", drawAll);
+  }
 
   function initThemeToggle() {
     var body = document.body;
@@ -289,6 +429,7 @@
   function init() {
     initThemeToggle();
     initVoidPanels();
+    initEntryCardScans();
     initClickableCards();
   }
 
@@ -298,3 +439,6 @@
     init();
   }
 })();
+
+
+
