@@ -35,6 +35,7 @@ unsafe = true
 
 [markup]
   [markup.highlight]
-    style = "native"             # Choose a theme (e.g., monokai, dracula, github, etc.)
-    lineNos = false              # Enable line numbers (optional)
-    lineNumbersInTable = false   # Makes line numbers cleaner (optional)
+    style = "native"
+    lineNos = false
+    lineNumbersInTable = false
+    noClasses = false
