@@ -29,6 +29,10 @@ theme = 'woldhack'
     name = "Tools"
     url = "/tools/"
     weight = 2
+  [[menu.main]]
+    name = "Posts"
+    url = "/posts/"
+    weight = 3
 
 [markup.goldmark.renderer]
 unsafe = true
