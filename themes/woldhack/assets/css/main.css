@@ -10,6 +10,7 @@
   --heading: #e8e6dc;
   --muted: #8f8d83;
   --accent: #f97316;
+  --secondary-stroke: #2e2e26;
   --code-bg: #0d0d0a;
   --code-border: #1f1f19;
   --code-text: #d7d5c9;
@@ -53,6 +54,7 @@ html.is-light body {
   --input-text: #1a1a14;
   --heading: #111110;
   --muted: #6f6c62;
+  --secondary-stroke: #111111;
   --code-bg: #f5f4ee;
   --code-border: #cbc8bd;
   --code-text: #25241d;
@@ -236,7 +238,7 @@ a:focus-visible {
 .hero-panel {
   position: relative;
   overflow: hidden;
-  border-color: var(--input-border);
+  border-color: var(--secondary-stroke);
 }
 
 .hero-panel > * {
@@ -281,6 +283,7 @@ html.is-light .hero-panel .void-bg {
   border: 1px solid var(--panel-border);
   transition: border-color 0.12s ease;
   overflow: hidden;
+  border-color: var(--secondary-stroke);
 }
 
 .content-card-no-media {
