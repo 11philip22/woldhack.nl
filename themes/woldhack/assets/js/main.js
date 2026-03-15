@@ -433,38 +433,8 @@
     });
   }
 
-  function syncFooterHeightToHeader() {
-    var header = document.querySelector(".site-header");
-    var root = document.documentElement;
-
-    if (!header || !root) {
-      return;
-    }
-
-    var applyHeight = function () {
-      var headerHeight = Math.ceil(header.getBoundingClientRect().height);
-      root.style.setProperty("--header-height", headerHeight + "px");
-    };
-
-    applyHeight();
-
-    var resizeTimer;
-    window.addEventListener("resize", function () {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(applyHeight, 120);
-    });
-
-    if (typeof ResizeObserver !== "undefined") {
-      var headerObserver = new ResizeObserver(applyHeight);
-      headerObserver.observe(header);
-    }
-
-    document.addEventListener("woldhack-theme-change", applyHeight);
-  }
-
   function init() {
     initThemeToggle();
-    syncFooterHeightToHeader();
     initVoidPanels();
     initEntryCardScans();
     initClickableCards();
@@ -476,4 +446,3 @@
     init();
   }
 })();
-

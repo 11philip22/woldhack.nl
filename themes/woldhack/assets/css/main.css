@@ -21,6 +21,7 @@
   --code-comment: #6f6d62;
   --code-function: #70d6ff;
   --max-width: 1080px;
+  --footer-height: 88px;
 }
 
 * {
@@ -78,6 +79,8 @@ a:focus-visible {
 
 .site-shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 28px 20px 20px;
 }
 
@@ -203,6 +206,10 @@ a:focus-visible {
   border-color: var(--accent);
   background: rgba(249, 115, 22, 0.12);
   color: var(--accent);
+}
+
+.site-main {
+  flex: 1;
 }
 
 .site-main .site-wrap {
@@ -643,7 +650,8 @@ html.is-light .content-card .card-scan-bg {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-border);
-  min-height: var(--header-height, 0px);
+  box-sizing: border-box;
+  height: var(--footer-height);
 }
 
 .footer-copy,
@@ -707,6 +715,3 @@ html.is-light .content-card .card-scan-bg {
     gap: 4px;
   }
 }
-
-
-
