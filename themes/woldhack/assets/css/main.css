@@ -292,10 +292,9 @@ html.is-light .hero-panel .void-bg {
   align-items: stretch;
   background: var(--panel-bg);
   padding: 16px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--secondary-stroke);
   transition: border-color 0.12s ease;
   overflow: hidden;
-  border-color: var(--secondary-stroke);
 }
 
 .content-card-no-media {
@@ -503,7 +502,6 @@ html.is-light .content-card .card-scan-bg {
   color: var(--code-text) !important;
   width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
 }
 
 .rich-content .highlight pre code,
@@ -648,7 +646,6 @@ html.is-light .content-card .card-scan-bg {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-border);
-  box-sizing: border-box;
   height: var(--footer-height);
 }
 
@@ -703,10 +700,6 @@ html.is-light .content-card .card-scan-bg {
 @media (max-width: 560px) {
   .site-shell {
     padding: 20px 12px 14px;
-  }
-
-  .card-grid {
-    grid-template-columns: 1fr;
   }
 
   .menu-list {
