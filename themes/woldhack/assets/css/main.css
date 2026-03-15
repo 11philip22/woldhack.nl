@@ -638,6 +638,7 @@ html.is-light .content-card .card-scan-bg {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--panel-border);
+  min-height: var(--header-height, 0px);
 }
 
 .footer-copy,
@@ -700,5 +701,6 @@ html.is-light .content-card .card-scan-bg {
     gap: 4px;
   }
 }
+
 
 
