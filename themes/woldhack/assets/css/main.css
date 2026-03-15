@@ -181,7 +181,7 @@ a:focus-visible {
   padding: 5px 12px;
   border: 1px solid var(--input-border);
   background: transparent;
-  color: var(--label);
+  color: var(--text);
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
