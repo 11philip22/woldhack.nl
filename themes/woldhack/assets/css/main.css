@@ -3,7 +3,6 @@
   --panel-bg: #070705;
   --panel-border: #161612;
   --text: #c8c6bc;
-  --label: #484840;
   --input-bg: #090907;
   --input-border: #1e1e18;
   --input-text: #c8c6bc;
@@ -49,7 +48,6 @@ html.is-light body {
   --panel-bg: #edece5;
   --panel-border: #c8c6be;
   --text: #2a2a22;
-  --label: #888880;
   --input-bg: #f2f1ea;
   --input-border: #c0beb6;
   --input-text: #1a1a14;
