@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --page-bg: #070705;
   --panel-bg: #070705;
   --panel-border: #161612;
@@ -292,6 +292,7 @@ html.is-light .hero-panel .void-bg {
   align-items: stretch;
   background: var(--panel-bg);
   padding: 16px;
+  min-height: 110px;
   border: 1px solid var(--secondary-stroke);
   transition: border-color 0.12s ease;
   overflow: hidden;
