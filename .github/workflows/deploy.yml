@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://woldhack.nl/
 
     steps:
       - name: Checkout
@@ -33,10 +33,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
@@ -44,20 +40,9 @@ jobs:
           extended: true
 
       - name: Build Site
-        env:
-          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
-          HUGO_BASEURL: ${{ vars.HUGO_BASEURL }}
         run: |
-          if [[ -n "$CUSTOM_DOMAIN" ]]; then
-            BASE_URL="https://${CUSTOM_DOMAIN}/"
-            printf '%s\n' "$CUSTOM_DOMAIN" > static/CNAME
-          elif [[ -n "$HUGO_BASEURL" ]]; then
-            BASE_URL="$HUGO_BASEURL"
-          else
-            BASE_URL="${{ steps.pages.outputs.base_url }}/"
-          fi
-
-          hugo --gc --minify --baseURL "$BASE_URL"
+          printf '%s\n' 'woldhack.nl' > static/CNAME
+          hugo --gc --minify --baseURL 'https://woldhack.nl/'
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
