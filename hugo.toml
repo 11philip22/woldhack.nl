@@ -1,3 +1,4 @@
+# CI overrides this with `--baseURL` during GitHub Pages deploys.
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
 title = 'woldhack'
