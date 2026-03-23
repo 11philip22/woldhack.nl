@@ -1,5 +1,5 @@
 ---
-date: "2025-08-20T12:00:40+02:00"
+date: "2021-10-22T00:00:00+02:00"
 draft: false
 title: "Compiling LLVM with visual studio"
 ---
