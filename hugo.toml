@@ -14,12 +14,12 @@ theme = 'woldhack'
     url = "/posts/"
     weight = 2
   [[menu.main]]
-    name = "Projects"
-    url = "/projects/"
+    name = "Software"
+    url = "/software/"
     weight = 3
   [[menu.main]]
-    name = "Tools"
-    url = "/tools/"
+    name = "Hardware"
+    url = "/hardware/"
     weight = 4
 
 [markup.goldmark.renderer]
