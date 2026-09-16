@@ -8,11 +8,6 @@
 {{ $thumb := .Resources.GetMatch "*thumbnail*" }}
 {{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*cover*" }}{{ end }}
 {{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*featured*" }}{{ end }}
-{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.webp" }}{{ end }}
-{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.jpg" }}{{ end }}
-{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.jpeg" }}{{ end }}
-{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.png" }}{{ end }}
-{{ if not $thumb }}{{ $thumb = .Resources.GetMatch "*.avif" }}{{ end }}
 
 {{ $thumbURL := "" }}
 {{ with $thumb }}{{ $thumbURL = .RelPermalink }}{{ end }}
