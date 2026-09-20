@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="366" viewBox="0 0 860 366" role="img" aria-labelledby="title desc">
+  <title id="title">Illustrative start-bit and state timing</title>
+  <desc id="desc">With startup complete and the bus free, the synchronized capture_start rises after one ULPI clock edge. On the next edge the core moves from ST_STARTUP to ST_IDLE, and on the following edge to ST_COMMAND. This illustrates the core signals before the analyzer input register.</desc>
+  <style>
+    :root {
+      --bg: #0d0d0a; --text: #e8e6dc; --line: #c8c6bc; --grid: #49493f;
+      --accent: #f97316; --start: #70d6ff; --state: #9fda7f;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f4ee; --text: #111110; --line: #2a2a22; --grid: #b0ada3;
+        --accent: #c2410c; --start: #0f6ea6; --state: #2f7d34;
+      }
+    }
+    text { font-family: Arial, sans-serif; fill: var(--text); font-size: 16px; }
+    .signal { font-family: Consolas, monospace; font-size: 16px; }
+    .muted { fill: var(--line); font-size: 15px; }
+    .grid { stroke: var(--grid); stroke-width: 1; stroke-dasharray: 4 5; }
+    .wave { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+  </style>
+  <rect width="860" height="366" rx="6" fill="var(--bg)"/>
+  <text x="24" y="34" style="fill:var(--accent)">Illustrative timing</text>
+  <text class="muted" x="836" y="34" text-anchor="end">Startup complete · ULPI bus free</text>
+
+  <path class="grid" d="M 244 74 V 288 M 396 74 V 288 M 548 74 V 288 M 700 74 V 288"/>
+  <text class="muted" x="320" y="65" text-anchor="middle">16.667 ns</text>
+  <path d="M 244 68 H 396" stroke="var(--line)"/>
+  <text class="signal" x="24" y="113">ulpi_clk</text>
+  <path class="wave" stroke="var(--line)" d="M 200 125 H 244 V 91 H 320 V 125 H 396 V 91 H 472 V 125 H 548 V 91 H 624 V 125 H 700 V 91 H 776 V 125 H 836"/>
+
+  <text class="signal" x="24" y="187">capture_start</text>
+  <path class="wave" stroke="var(--start)" d="M 200 200 H 402 V 166 H 836"/>
+  <text class="muted" x="215" y="188">0</text>
+  <text class="muted" x="422" y="188">1</text>
+
+  <text class="signal" x="24" y="260">debug_state</text>
+  <path class="wave" stroke="var(--state)" d="M 200 237 H 548 L 560 273 H 700 L 712 237 H 836 M 200 273 H 548 L 560 237 H 700 L 712 273 H 836"/>
+  <text x="374" y="261" text-anchor="middle">ST_STARTUP (0)</text>
+  <text x="630" y="260" text-anchor="middle" style="font-size:14px">ST_IDLE (1)</text>
+  <text x="774" y="260" text-anchor="middle" style="font-size:14px">ST_COMMAND (2)</text>
+
+  <path d="M 402 205 V 215 H 416" fill="none" stroke="var(--start)"/>
+  <text x="424" y="220">Synchronized start becomes 1</text>
+  <path d="M 554 278 V 339 H 575" fill="none" stroke="var(--state)"/>
+  <text x="583" y="344">Next edge: core leaves startup</text>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="350" viewBox="0 0 860 350" role="img" aria-labelledby="title desc">
+  <title id="title">FPGA, USB PHY and programmer connections</title>
+  <desc id="desc">The PC uses a Digilent HS3 USB-to-JTAG programmer to configure and debug the FPGA. A USB host connects to the USB3300 PHY. The PHY exchanges data with the FPGA over ULPI and supplies the 60 MHz clock.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--line)"/>
+    </marker>
+    <marker id="arrow-back" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 10 0 L 0 5 L 10 10 z" fill="var(--line)"/>
+    </marker>
+  </defs>
+  <style>
+    :root {
+      --bg: #0d0d0a; --text: #e8e6dc; --line: #c8c6bc;
+      --accent: #f97316; --box: #181815; --border: #66665b; --clock: #70d6ff;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f4ee; --text: #111110; --line: #2a2a22;
+        --accent: #c2410c; --box: #edece5; --border: #6f6c62; --clock: #0f6ea6;
+      }
+    }
+    text { font-family: Arial, sans-serif; fill: var(--text); font-size: 18px; }
+    .label { fill: var(--line); font-size: 16px; }
+    .heading { fill: var(--accent); font-size: 17px; }
+    .box { fill: var(--box); stroke: var(--border); stroke-width: 1.5; }
+    .wire { fill: none; stroke: var(--line); stroke-width: 2; marker-start: url(#arrow-back); marker-end: url(#arrow); }
+  </style>
+  <rect width="860" height="350" rx="6" fill="var(--bg)"/>
+  <text class="heading" x="24" y="41">Programming and debugging</text>
+  <text class="heading" x="24" y="200">USB test</text>
+
+  <rect class="box" x="24" y="70" width="146" height="76" rx="5"/>
+  <text x="97" y="114" text-anchor="middle">PC</text>
+  <rect class="box" x="290" y="70" width="182" height="76" rx="5"/>
+  <text x="381" y="101" text-anchor="middle">Digilent HS3</text>
+  <text class="label" x="381" y="128" text-anchor="middle">USB-to-JTAG</text>
+  <path class="wire" d="M 177 108 H 283"/>
+  <text class="label" x="230" y="95" text-anchor="middle">USB</text>
+  <path class="wire" d="M 479 108 H 629"/>
+  <text class="label" x="554" y="95" text-anchor="middle">JTAG</text>
+
+  <rect class="box" x="24" y="225" width="146" height="76" rx="5"/>
+  <text x="97" y="269" text-anchor="middle">USB host</text>
+  <rect class="box" x="290" y="225" width="182" height="76" rx="5"/>
+  <text x="381" y="257" text-anchor="middle">USB3300</text>
+  <text class="label" x="381" y="284" text-anchor="middle">USB PHY</text>
+  <path class="wire" d="M 177 263 H 283"/>
+  <text class="label" x="230" y="250" text-anchor="middle">USB</text>
+  <path class="wire" d="M 479 250 H 629"/>
+  <text class="label" x="554" y="237" text-anchor="middle">ULPI data/control</text>
+  <path d="M 479 286 H 629" fill="none" stroke="var(--clock)" stroke-width="2" marker-end="url(#arrow)"/>
+  <text class="label" x="554" y="315" text-anchor="middle">60 MHz clock</text>
+
+  <rect class="box" x="636" y="70" width="200" height="231" rx="5"/>
+  <text x="736" y="165" text-anchor="middle">Spartan-6 FPGA</text>
+  <text class="label" x="736" y="194" text-anchor="middle">Test logic</text>
+  <text class="label" x="736" y="219" text-anchor="middle">+ debug hardware</text>
+</svg>

@@ -35,6 +35,7 @@ body {
 
 body {
   min-height: 100vh;
+  color-scheme: dark;
   background: var(--page-bg);
   color: var(--text);
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -44,6 +45,7 @@ body {
 
 body.is-light,
 html.is-light body {
+  color-scheme: light;
   --page-bg: #e8e7e0;
   --panel-bg: #edece5;
   --panel-border: #c8c6be;
