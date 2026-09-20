@@ -638,9 +638,25 @@ html.is-light .content-card .card-scan-bg {
 .rich-content img,
 .article-content img {
   display: block;
-  max-width: 100%;
+  max-width: min(100%, 52rem);
   height: auto;
+  margin: 1.5rem auto;
+  padding: 0.5rem;
   border: 1px solid var(--input-border);
+  background: var(--input-bg);
+}
+
+.screenshot-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.screenshot-row img {
+  margin: 0;
 }
 
 .site-footer {
