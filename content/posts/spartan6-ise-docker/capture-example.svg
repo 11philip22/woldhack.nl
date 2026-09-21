@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="366" viewBox="0 0 860 366" role="img" aria-labelledby="title desc">
-  <title id="title">Illustrative start-bit and state timing</title>
-  <desc id="desc">With startup complete and the bus free, the synchronized capture_start rises after one ULPI clock edge. On the next edge the core moves from ST_STARTUP to ST_IDLE, and on the following edge to ST_COMMAND. This illustrates the core signals before the analyzer input register.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="410" viewBox="0 0 860 410" role="img" aria-labelledby="title desc">
+  <title id="title">Illustrative LiteScope capture of a command timeout</title>
+  <desc id="desc">The PHY acknowledgement signal ulpi_nxt stays low. The test changes from ST_WAIT_COMMAND, value 3, to ST_FAIL, value 11, when the error code becomes 1. That error triggers the capture, which includes samples before and after the failure. Only a few samples are shown.</desc>
   <style>
     :root {
       --bg: #0d0d0a; --text: #e8e6dc; --line: #c8c6bc; --grid: #49493f;
-      --accent: #f97316; --start: #70d6ff; --state: #9fda7f;
+      --accent: #f97316; --ack: #70d6ff; --state: #9fda7f;
     }
     @media (prefers-color-scheme: light) {
       :root {
         --bg: #f5f4ee; --text: #111110; --line: #2a2a22; --grid: #b0ada3;
-        --accent: #c2410c; --start: #0f6ea6; --state: #2f7d34;
+        --accent: #c2410c; --ack: #0f6ea6; --state: #2f7d34;
       }
     }
     text { font-family: Arial, sans-serif; fill: var(--text); font-size: 16px; }
@@ -18,29 +18,33 @@
     .grid { stroke: var(--grid); stroke-width: 1; stroke-dasharray: 4 5; }
     .wave { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
   </style>
-  <rect width="860" height="366" rx="6" fill="var(--bg)"/>
-  <text x="24" y="34" style="fill:var(--accent)">Illustrative timing</text>
-  <text class="muted" x="836" y="34" text-anchor="end">Startup complete · ULPI bus free</text>
+  <rect width="860" height="410" rx="6" fill="var(--bg)"/>
+  <text x="24" y="32" style="fill:var(--accent)">Capture of a command timeout</text>
+  <text class="muted" x="836" y="32" text-anchor="end">Illustrative · 60 MHz</text>
 
-  <path class="grid" d="M 244 74 V 288 M 396 74 V 288 M 548 74 V 288 M 700 74 V 288"/>
-  <text class="muted" x="320" y="65" text-anchor="middle">16.667 ns</text>
-  <path d="M 244 68 H 396" stroke="var(--line)"/>
-  <text class="signal" x="24" y="113">ulpi_clk</text>
-  <path class="wave" stroke="var(--line)" d="M 200 125 H 244 V 91 H 320 V 125 H 396 V 91 H 472 V 125 H 548 V 91 H 624 V 125 H 700 V 91 H 776 V 125 H 836"/>
+  <rect x="200" y="52" width="336" height="30" fill="var(--line)" opacity="0.08"/>
+  <rect x="538" y="52" width="298" height="30" fill="var(--accent)" opacity="0.12"/>
+  <text class="muted" x="368" y="73" text-anchor="middle">Before trigger</text>
+  <text class="muted" x="687" y="73" text-anchor="middle">After trigger</text>
 
-  <text class="signal" x="24" y="187">capture_start</text>
-  <path class="wave" stroke="var(--start)" d="M 200 200 H 402 V 166 H 836"/>
-  <text class="muted" x="215" y="188">0</text>
-  <text class="muted" x="422" y="188">1</text>
+  <path class="grid" d="M 236 112 V 343 M 336 112 V 343 M 436 112 V 343 M 636 112 V 343 M 736 112 V 343 M 836 112 V 343"/>
+  <path d="M 536 83 V 343" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="548" y="103" style="fill:var(--accent);font-size:14px">Trigger: error = 1</text>
 
-  <text class="signal" x="24" y="260">debug_state</text>
-  <path class="wave" stroke="var(--state)" d="M 200 237 H 548 L 560 273 H 700 L 712 237 H 836 M 200 273 H 548 L 560 237 H 700 L 712 273 H 836"/>
-  <text x="374" y="261" text-anchor="middle">ST_STARTUP (0)</text>
-  <text x="630" y="260" text-anchor="middle" style="font-size:14px">ST_IDLE (1)</text>
-  <text x="774" y="260" text-anchor="middle" style="font-size:14px">ST_COMMAND (2)</text>
+  <text class="signal" x="24" y="141">ulpi_nxt</text>
+  <path class="wave" stroke="var(--ack)" d="M 200 154 H 836"/>
+  <text class="muted" x="216" y="140">0 — no acknowledgement</text>
 
-  <path d="M 402 205 V 215 H 416" fill="none" stroke="var(--start)"/>
-  <text x="424" y="220">Synchronized start becomes 1</text>
-  <path d="M 554 278 V 339 H 575" fill="none" stroke="var(--state)"/>
-  <text x="583" y="344">Next edge: core leaves startup</text>
+  <text class="signal" x="24" y="224">debug_state</text>
+  <path class="wave" stroke="var(--state)" d="M 200 200 H 530 L 542 236 H 836 M 200 236 H 530 L 542 200 H 836"/>
+  <text x="365" y="224" text-anchor="middle">ST_WAIT_COMMAND (3)</text>
+  <text x="689" y="224" text-anchor="middle">ST_FAIL (11)</text>
+
+  <text class="signal" x="24" y="309">debug_error_code</text>
+  <path class="wave" stroke="var(--accent)" d="M 200 322 H 536 V 288 H 836"/>
+  <text class="muted" x="216" y="309">0</text>
+  <text class="muted" x="558" y="312">1</text>
+
+  <text x="200" y="374">The capture keeps the wait and the failure in view.</text>
+  <text class="muted" x="836" y="392" text-anchor="end">Time →</text>
 </svg>

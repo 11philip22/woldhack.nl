@@ -150,181 +150,75 @@ On Windows, the script adds Git for Windows' `usr/bin` directory to `PATH` so Op
 
 ## Debugging
 
-A blinking LED can give you a pass or fail result, but when you want to see what's happening inside the FPGA, [LiteScope](https://github.com/enjoy-digital/litescope) gives you a logic analyzer built into the design. It records selected signals into block RAM, the FPGA's internal memory, for later download as VCD or CSV. A waveform displays how those values changed over time.
+A blinking LED can give you a pass or fail result, but when you want to see what's happening inside the FPGA, [LiteScope](https://github.com/enjoy-digital/litescope) gives you a logic analyzer built into the design. It records selected signals into the FPGA's internal memory. The capture can then be downloaded as a VCD waveform or a CSV file.
 
-The examples below use a separate USB attach/reset test. The Python generator leaves `HOST_ATTACH` at its default of 0, so this design attaches to a USB host and watches for a reset from it.
+### The debug setup
 
-### Migen and LiteX
+[Migen](https://m-labs.hk/migen/manual/fhdl.html) and [LiteX](https://github.com/enjoy-digital/litex) put the debug hardware around the existing Verilog design. Migen generates Verilog from Python, while LiteX provides the control registers and connections between the hardware blocks. `SoCMini` supplies a small LiteX system without a CPU or firmware.
 
-The debug hardware is put together with [Migen](https://m-labs.hk/migen/manual/fhdl.html) and [LiteX](https://github.com/enjoy-digital/litex). Migen is a Python library for describing hardware and generating Verilog. LiteX builds on that with buses, control registers and reusable hardware blocks. The Python code runs on the PC to generate the design that ISE builds, including connections to the existing Verilog.
+JTAGBone gives the PC access to those control registers through the same HS3 programmer. On Windows, OpenOCD handles the programmer, and a Python bridge connects it to a LiteX server on `localhost:1234`:
 
-[SoCMini](https://github.com/enjoy-digital/litex/blob/2024.12/litex/soc/integration/soc_core.py) provides a minimal LiteX system around the debug hardware. Here it supplies the bus and register access without a CPU or firmware. [JTAGBone](https://github.com/enjoy-digital/litex/blob/2024.12/litex/soc/integration/soc.py) bridges JTAG to Wishbone, the internal bus used in this setup. That gives the PC access to the analyzer through the same JTAG programmer.
+```powershell
+& .\.venv-litescope\Scripts\python.exe .\litescope\litex_jtag_server_windows.py `
+    --config .\litescope\openocd-hs3-spartan6.cfg `
+    --openocd (Get-Command openocd.exe).Source
+```
 
-### Clock domains
+For this example, the debug bitstream contains a separate USB attach/reset test. LiteScope records the test's state, error code and ULPI signals at 60 MHz. Its 1024-sample buffer holds about 17 microseconds of activity.
 
-The design uses two clocks. The parts of the circuit that update from the same clock form a clock domain:
+### Capturing a failed command
 
-| Domain | Clock | What uses it |
-| --- | --- | --- |
-| `sys` | 50 MHz from the board | LiteX control registers and bus access |
-| `ulpi` | 60 MHz from the USB3300 | Verilog test core and LiteScope sampling |
+An error code of 1 means the FPGA timed out waiting for the PHY to accept a register command. The capture below waits for that error and saves the signals around it. The condition that selects this moment is called the trigger.
 
-The PC writes to a control register on the `sys` side, but the test reads its start input on the `ulpi` side. These clocks run independently. A value changing on one clock can arrive just as a flip-flop on the other clock is sampling it. That flip-flop may take too long to settle to a valid 0 or 1. This is called metastability and can cause the receiving logic to behave unpredictably.
-
-The generator marks connections between these clocks as [false paths](https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Clock-Domain-Crossing). This tells ISE to skip the usual timing checks between them, since their edges have no fixed relationship. The hardware still has to handle the crossing. The start bit is an example of this.
-
-### Starting the test
-
-The debug build waits for the PC to set a start bit. This gives the PC time to prepare the analyzer before the test begins.
-
-`CSRStorage(1, reset=0)` creates a one-bit control register, initially 0, which the PC can write through JTAGBone. `Signal` represents a value in the generated hardware, one bit wide by default. The connection between the two clock domains is made with `MultiReg`:
+This `capture.py` example starts with a freshly loaded debug bitstream in SRAM and the LiteX server running. The test waits for a start command from the PC. The two CSV files come from the debug build: `csr.csv` contains the register addresses, and `analyzer.csv` describes the recorded signals.
 
 ```python
-capture_start = Signal(name="attach_reset_capture_start")
+from pathlib import Path
+import time
 
-self.attach_reset_start = CSRStorage(1, reset=0)
-self.add_csr("attach_reset_start")
-self.specials += MultiReg(self.attach_reset_start.storage, capture_start, "ulpi")
+from litex.tools.litex_client import RemoteClient
+from litescope.software.driver.analyzer import LiteScopeAnalyzerDriver
+
+build = Path(__file__).resolve().parent / "build" / "attach-reset-litescope"
+bus = RemoteClient(csr_csv=str(build / "csr.csv"))
+bus.open()
+try:
+    analyzer = LiteScopeAnalyzerDriver(
+        bus.regs, "analyzer", config_csv=str(build / "analyzer.csv")
+    )
+    analyzer.configure_group(0)
+    analyzer.configure_subsampler(1)
+    analyzer.add_trigger(cond={"main_debug_error_code": "1"})
+    analyzer.run(offset=512, length=1024)
+
+    # The analyzer is ready before the test starts.
+    bus.regs.main_attach_reset_start.write(1)
+
+    deadline = time.monotonic() + 20
+    while not analyzer.done():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Trigger not seen within 20 seconds")
+        time.sleep(0.05)
+
+    analyzer.upload()
+    analyzer.save(str(build / "command-timeout.vcd"))
+    analyzer.save(str(build / "command-timeout.csv"))
+finally:
+    bus.close()
 ```
 
-[MultiReg](https://github.com/m-labs/migen/blob/master/migen/genlib/cdc.py) puts two flip-flops between the control register and `capture_start`. Both use the `ulpi` clock. The first samples the incoming bit, and the second takes the first one's value on the next clock edge. This gives the first flip-flop time to settle and reduces the chance of metastability reaching the test logic.
+With `capture.py` in the project root, the command in a second terminal is:
 
-The control register keeps its value until the PC writes it again. That gives the receiving clock time to pick it up. This works for a start bit that stays at 1; a short pulse could be missed between clock edges.
-
-The synchronized value, `capture_start`, connects to the Verilog core's `test_start` input. The standalone test has this input fixed at 1. In the debug build it starts at 0 and waits for the PC.
-
-Inside the core, `state` records what the test is doing. It begins in `ST_STARTUP`. The startup part of the Verilog looks like this, with the other states and bus assignments omitted:
-
-```verilog
-always @(posedge ulpi_clk) begin
-    case (state)
-        ST_STARTUP: begin
-            if (~&startup_count) begin
-                startup_count <= startup_count + 1'b1;
-            end else if (test_start && !ulpi_dir) begin
-                state <= ST_IDLE;
-            end
-        end
-    endcase
-end
+```powershell
+& .\.venv-litescope\Scripts\python.exe .\capture.py
 ```
 
-`posedge ulpi_clk` means this logic updates on each rising clock edge. The `<=` assignments schedule the new register values. Other logic using the same edge still reads the old values.
+`offset=512` keeps half the samples from before the trigger. This is useful since the command timeout takes roughly 280 ms, far longer than the capture buffer. Triggering on the error keeps the end of that wait and the failure in view. If the error never occurs, the script stops after 20 seconds. Another test run needs a fresh SRAM load.
 
-`~&startup_count` is true until all bits in the counter are 1. Each clock adds `1'b1`, a one-bit binary value of 1, until the counter is full. This provides the startup delay. After that, `test_start` must be 1 and `ulpi_dir` must be 0, meaning the bus is free, before the core moves to `ST_IDLE`.
+The diagram shows what that failure could look like. `ulpi_nxt` stays at 0, so the FPGA is still waiting for the PHY to acknowledge the command. The state then changes from `ST_WAIT_COMMAND` to `ST_FAIL`, and the error code becomes 1. That narrows the next checks to the ULPI connection and its timing.
 
-### Debug signals
+{{< figure src="capture-example.svg" link="capture-example.svg" alt="Illustrative capture of a register-command timeout. The PHY acknowledgement signal ulpi_nxt stays low. The test changes from ST_WAIT_COMMAND to ST_FAIL as the error code becomes 1, which triggers the capture. Samples are retained before and after the trigger." caption="Illustrative timeout capture, with only a few of the 1024 samples shown. The signal names are shortened here." >}}
 
-The LED shows whether the test passed or failed. To see where it got stuck, the analyzer needs the actual state and error code. The Verilog core makes these available through two output ports:
+## Agent skills
 
-```verilog
-reg [3:0] state = ST_STARTUP;
-reg [3:0] error_code = 4'd0;
-
-assign debug_state = state;
-assign debug_error_code = error_code;
-```
-
-`[3:0]` declares four bits, numbered 3 down to 0. `4'd0` is a four-bit decimal value of 0. The `assign` statements connect these stored values to the output ports, so the analyzer can see them.
-
-On the Python side, `Instance` adds the Verilog core to the generated design and connects its ports. `Signal(4)` represents a four-bit value. The `i_` prefixes are inputs to the core and the `o_` prefixes are outputs. Only the clock, start input and two debug outputs are shown here:
-
-```python
-debug_state = Signal(4, name="debug_state")
-debug_error_code = Signal(4, name="debug_error_code")
-
-self.specials += Instance(
-    "ulpi_attach_reset_test_core",
-    i_ulpi_clk=self.crg.ulpi_clk,
-    i_test_start=capture_start,
-    o_debug_state=debug_state,
-    o_debug_error_code=debug_error_code,
-)
-```
-
-### Capturing signals
-
-LiteScope records `capture_start`, `debug_state` and `debug_error_code` together. Each sample is a snapshot of all three values at one clock edge. This makes it possible to see when the start bit reached the core, which state followed and whether an error occurred:
-
-```python
-self.submodules.analyzer = LiteScopeAnalyzer(
-    [capture_start, debug_state, debug_error_code],
-    depth=1024,
-    samplerate=60_000_000,
-    clock_domain="ulpi",
-    register=True,
-    csr_csv=str(BUILD_DIR / "analyzer.csv"),
-)
-self.add_csr("analyzer")
-```
-
-`clock_domain="ulpi"` makes the analyzer sample on the test core's 60 MHz clock. With `depth=1024`, it can hold 1024 samples, covering about 17 microseconds. `samplerate` supplies the frequency used to label time in the exported waveform.
-
-`register=True` adds an input register to each recorded signal. This delays all three signals by one clock, keeping their timing relative to each other intact.
-
-Arming the analyzer makes it wait for a trigger, a condition that identifies the event to capture. For this example, a useful trigger is `capture_start` becoming 1. The capture can include samples from before and after that event.
-
-The waveform below illustrates what happens when the startup delay has finished and the bus is free. At the edge where `capture_start` changes to 1, the core still reads its old value of 0. On the next edge it reads 1 and moves from `ST_STARTUP` to `ST_IDLE`.
-
-{{< figure src="capture-example.svg" link="capture-example.svg" alt="Illustrative waveform: capture_start changes from 0 to 1 after a ULPI clock edge. On the next edge, debug_state changes from ST_STARTUP, value 0, to ST_IDLE, value 1. On the following edge it changes to ST_COMMAND, value 2." caption="Illustrative waveform of the core signals, before the analyzer's input registers. Each column is one 60 MHz clock cycle." >}}
-
-The captured data also has to cross between clocks on its way back to the PC. LiteScope uses an [asynchronous FIFO](https://github.com/enjoy-digital/litescope/blob/2024.12/litescope/core.py) for this, a queue that can be written and read using different clocks. Samples enter it from `ulpi` and leave through `sys`. JTAG carries the stored capture to the PC, so its speed affects download time while the sampling runs at 60 MHz.
-
-On Windows, OpenOCD talks to the Digilent HS3. A software bridge connects OpenOCD to the LiteX server, giving the PC capture tools access to the analyzer. The generated files go under `build/attach-reset-litescope`, and the debug bitstream goes into SRAM.
-
-### Finding where the test stops
-
-The analyzer example above only shows three signals. The full generator also records the ULPI data and control signals, the current test phase and several status flags. These help explain why the test has stopped making progress.
-
-#### The test stays in startup
-
-If `debug_state` stays at `ST_STARTUP` (0), the useful signals are `capture_start` and `ulpi_dir`. The startup counter also has to finish first. It is 19 bits wide, so that takes about 8.7 ms at 60 MHz, much longer than one capture.
-
-After that delay, a capture with `capture_start=1` and `ulpi_dir=1` shows that the start bit reached the test, but the PHY still owns the bus. The core is waiting for `ulpi_dir` to become 0. Once both conditions are met, the next clock should move it to `ST_IDLE` (1).
-
-If `capture_start` stays at 0, the start command is the part to check. Reading back the `attach_reset_start` control register shows whether the PC's write reached LiteX. A value of 1 there confirms the write on the `sys` side; the captured `capture_start` shows what reached the `ulpi` side.
-
-A trigger waiting for the start bit will also keep waiting if that bit never arrives. An immediate capture is useful in that case. If no samples arrive at all, the 60 MHz clock is one of the things to check: JTAG access can still work through `sys` while the test and analyzer have no clock.
-
-#### A register command times out
-
-For a fast-blinking LED, `debug_error_code` gives a more useful starting point. An error code of 1 comes from the timeout branch in `ST_WAIT_COMMAND` (3):
-
-```verilog
-else if (&timeout_count) begin
-    data_oe <= 1'b0;
-    error_code <= 4'd1;
-    state <= ST_FAIL;
-end
-```
-
-In this state, the core has put a command on `ulpi_data` and is waiting for the PHY to acknowledge it by raising `ulpi_nxt`. `&timeout_count` becomes true when every bit in the timeout counter is 1.
-
-That counter is 24 bits wide, giving a wait of roughly 280 ms. A capture triggered at the start of the test would finish long before the timeout. A useful trigger here is `debug_error_code == 1`, with part of the buffer reserved for samples before the trigger.
-
-The signals to compare are `debug_state`, `debug_error_code`, `ulpi_data`, `ulpi_nxt` and `ulpi_dir`. A capture showing `ST_WAIT_COMMAND`, with `ulpi_dir=0` and `ulpi_nxt=0`, followed by `ST_FAIL` (11) and error 1 means the FPGA timed out waiting for the acknowledgement. The ULPI pin assignments and timing would be the next things to check.
-
-If `ulpi_dir` becomes 1 instead, this branch moves to `ST_ABORT` (12) and retries once the PHY releases the bus. The state trace makes that different path visible.
-
-#### A status change arrives earlier than expected
-
-There is another useful example in the core. The PHY can report the USB idle state while the FPGA is still configuring its registers. If the test only looks for that report after configuration, it can end up waiting for an event that already happened.
-
-The useful signals here are `debug_state`, `debug_phase`, `debug_line_state` and `debug_session_valid`. `state` tracks the register transactions, while `phase` tracks the overall test. For example, `ST_MONITOR` (9) means the core is watching the PHY, and `PH_WAIT_J` (4) means it is waiting for the bus's idle state after attachment, called J. In this test J is reported as `debug_line_state=1`.
-
-A trigger on `debug_line_state == 1`, with samples before the trigger, shows which state the core was in when J arrived. If it was still configuring registers, the report came before the test was ready to wait for it.
-
-The core keeps the latest reported line state in a register, so that information is still available afterwards. It checks this when configuration finishes and again in `ST_MONITOR`:
-
-```verilog
-if (phase == PH_WAIT_J && session_valid && line_state == 2'b01) begin
-    saw_j <= 1'b1;
-    phase <= PH_WAIT_SE0;
-end
-```
-
-This lets the test continue even if there is no second report. `debug_saw_j=1` and `debug_phase=PH_WAIT_SE0` (5) then show that it has seen the idle state and is waiting for the host's reset. For that part of the test, a trigger on `debug_phase == 6` captures the start of reset confirmation. The existing `debug_reset_count` signal shows progress towards the core's 150-count threshold. That takes about 2.5 microseconds when no new status reports pause the counting.
-
-The core only checks `test_start` during startup. Writing 0 and then 1 does not restart a completed or failed test, so another run of this design needs the bitstream loaded again.
-
-The build, flash and debugging workflows are collected in my [FPGA skills](https://github.com/11philip22/fpga-skills).
+If you want to use this setup for your own projects, I've collected the build, flash and debugging workflows in my [FPGA skills](https://github.com/11philip22/fpga-skills).
