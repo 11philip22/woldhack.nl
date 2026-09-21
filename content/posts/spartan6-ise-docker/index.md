@@ -1,12 +1,12 @@
 ---
 date: "2026-09-17T00:00:00+02:00"
 draft: false
-title: "Developing for Spartan-6 with ISE in Docker"
+title: "Developing for the Spartan 6 with ISE in Docker"
 ---
 
-I'm trying to get a Spartan-6 FPGA talking to a USB3300 USB PHY. The hardware is a s602 board with a 6SLX9TQG144 FPGA from AliExpress and a USB3300 ULPI board from Waveshare.
+I'm trying to get a Spartan 6 FPGA talking to a USB3300 USB PHY. The hardware is a s602 board with a 6SLX9TQG144 FPGA from AliExpress and a USB3300 ULPI board from Waveshare.
 
-On my Windows setup, running ISE in a VM means disabling WSL. So I run ISE 14.7 in Docker and build from PowerShell, keeping the old crap contained.
+On my Windows setup, running ISE in a VM means disabling WSL. So I run ISE 14.7 in Docker and build from PowerShell, keeping the old Xilinx crap contained.
 
 <!--more-->
 
@@ -30,7 +30,7 @@ Programming uses a separate connection. The [Digilent HS3](https://digilent.com/
 
 ## Setup
 
-ISE is Xilinx's software for building FPGA designs. Spartan-6 uses this older toolchain because [Vivado supports devices from the 7 series onward](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/licensing-faq.html).
+ISE is Xilinx's software for building FPGA designs. The spartan 6 FPGA uses this older toolchain because [Vivado supports devices from the 7 series onward](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/licensing-faq.html).
 
 [Docked-ISE-147](https://github.com/I-A-S/Docked-ISE-147) packages ISE for command-line use in a Linux container.
 
