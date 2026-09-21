@@ -1,7 +1,7 @@
 ---
 date: "2026-09-17T00:00:00+02:00"
 draft: false
-title: "Developing for the Spartan 6 with ISE in Docker"
+title: "Developing for the Xilinx Spartan 6 FPGA with ISE in Docker"
 ---
 
 I'm trying to get a Spartan 6 FPGA talking to a USB3300 USB PHY. The hardware is a s602 board with a 6SLX9TQG144 FPGA from AliExpress and a USB3300 ULPI board from Waveshare.
