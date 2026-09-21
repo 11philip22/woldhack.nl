@@ -1,6 +1,6 @@
 ---
 date: "2026-09-17T00:00:00+02:00"
-draft: true
+draft: false
 title: "Developing for Spartan-6 with ISE in Docker"
 ---
 
