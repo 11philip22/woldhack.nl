@@ -4,7 +4,7 @@ draft: false
 title: "Compiling LLVM with visual studio"
 ---
 
-Here at WoldTech we hate monolitic compilers. Thats why we exclusively use the llvm compiler infrastructure as our build toolchain.  
+Here at WoldTech we dont work with monolitic compilers. Thats why we exclusively use the llvm compiler infrastructure as our build toolchain.  
 In this post I will explain on how to integrate llvm with visual studio
 
 <!--more-->

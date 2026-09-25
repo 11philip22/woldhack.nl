@@ -4,7 +4,7 @@ draft: false
 title: "Writing Optimized Windows Shellcode in C"
 ---
 
-Since the original article describing this technique was taken down for unknown reason, I felt the need to "steal" it because i find this shellcode writing technique extremely usefull.  
+Since the original article is no longer available at its original URL, I wanted to explain the technique here because I find it useful.  
 You can still read the original article here: https://web.archive.org/web/20210305190309/http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html  
 http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html
 

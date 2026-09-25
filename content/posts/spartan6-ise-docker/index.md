@@ -6,7 +6,7 @@ title: "Developing for the Xilinx Spartan 6 FPGA with ISE in Docker"
 
 I'm trying to get a Spartan 6 FPGA talking to a USB3300 USB PHY. The hardware is a s602 board with a 6SLX9TQG144 FPGA from AliExpress and a USB3300 ULPI board from Waveshare.
 
-On my Windows setup, running ISE in a VM means disabling WSL. So I run ISE 14.7 in Docker and build from PowerShell, keeping the old Xilinx crap contained.
+On my Windows setup, running ISE in a VM means disabling WSL. So I run ISE 14.7 in Docker and build from PowerShell, keeping the old Xilinx tools in their own little box.
 
 <!--more-->
 
