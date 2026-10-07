@@ -433,11 +433,132 @@
     });
   }
 
+  function initImageViewer() {
+    var images = document.querySelectorAll(".article-content img");
+    var dialog = document.createElement("dialog");
+    if (!images.length || typeof dialog.showModal !== "function") {
+      return;
+    }
+
+    dialog.className = "image-viewer";
+    dialog.setAttribute("aria-label", "Image preview");
+    dialog.innerHTML = '<form method="dialog" class="image-viewer-controls"><output aria-live="polite">100%</output><button type="button" class="theme-toggle" data-zoom="out" aria-label="Zoom out">−</button><button type="button" class="theme-toggle" data-zoom="in" aria-label="Zoom in">+</button><button type="button" class="theme-toggle" data-zoom="fit" aria-label="Fit image to screen">Fit</button><button class="theme-toggle" aria-label="Close image preview" autofocus>Close</button></form><figure><div class="image-viewer-stage" tabindex="0" role="region" aria-label="Image area, scroll to pan when zoomed"><img alt="" decoding="async" draggable="false"></div><figcaption hidden></figcaption></figure>';
+    document.body.appendChild(dialog);
+    var preview = dialog.querySelector("img");
+    var caption = dialog.querySelector("figcaption");
+    var stage = dialog.querySelector(".image-viewer-stage");
+    var zoomIn = dialog.querySelector('[data-zoom="in"]');
+    var zoomOut = dialog.querySelector('[data-zoom="out"]');
+    var zoomFit = dialog.querySelector('[data-zoom="fit"]');
+    var zoomLabel = dialog.querySelector("output");
+    var zoom = 1;
+    var fitWidth = 0;
+    var trigger;
+
+    function setZoom(value) {
+      var next = Math.max(100, Math.min(800, Math.round(value * 100))) / 100;
+      var ratio = next / zoom;
+      var centerX = stage.scrollLeft + stage.clientWidth / 2;
+      var centerY = stage.scrollTop + stage.clientHeight / 2;
+      zoom = next;
+      stage.classList.toggle("is-zoomed", zoom > 1);
+      if (fitWidth) {
+        preview.style.width = fitWidth * zoom + "px";
+      }
+      stage.scrollLeft = centerX * ratio - stage.clientWidth / 2;
+      stage.scrollTop = centerY * ratio - stage.clientHeight / 2;
+      zoomLabel.value = Math.round(zoom * 100) + "%";
+      zoomIn.disabled = !fitWidth || zoom === 8;
+      zoomOut.disabled = zoomFit.disabled = zoom === 1;
+    }
+
+    function fitImage() {
+      if (!dialog.open || !preview.naturalWidth) {
+        return;
+      }
+      var currentZoom = zoom;
+      stage.classList.remove("is-zoomed");
+      stage.style.width = stage.style.height = preview.style.width = "";
+      var bounds = preview.getBoundingClientRect();
+      fitWidth = bounds.width;
+      stage.style.width = Math.ceil(bounds.width) + "px";
+      stage.style.height = Math.ceil(bounds.height) + "px";
+      zoom = 1;
+      setZoom(currentZoom);
+    }
+
+    zoomIn.addEventListener("click", function () { setZoom(zoom + 0.4); });
+    zoomOut.addEventListener("click", function () { setZoom(zoom - 0.4); });
+    zoomFit.addEventListener("click", function () { setZoom(1); });
+    preview.addEventListener("click", function () { setZoom(zoom === 1 ? 2 : 1); });
+    preview.addEventListener("load", fitImage);
+    window.addEventListener("resize", fitImage);
+
+    images.forEach(function (image) {
+      var link = image.closest("a");
+      if (link) {
+        if (link.href !== image.src && !/\.(avif|bmp|gif|ico|jpe?g|png|svg|webp)$/i.test(link.pathname)) {
+          return;
+        }
+      } else {
+        if (image.closest("button, [role='button']")) {
+          return;
+        }
+        link = document.createElement("a");
+        link.href = image.currentSrc || image.src;
+        image.replaceWith(link);
+        link.appendChild(image);
+      }
+
+      link.classList.add("image-viewer-trigger");
+      link.setAttribute("aria-haspopup", "dialog");
+      if (!image.alt && !link.hasAttribute("aria-label")) {
+        link.setAttribute("aria-label", "Enlarge image");
+      }
+      link.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+        event.preventDefault();
+        trigger = link;
+        setZoom(1);
+        preview.src = link.href;
+        preview.alt = image.alt;
+        var figure = image.closest("figure");
+        var sourceCaption = figure && figure.querySelector("figcaption");
+        caption.textContent = sourceCaption ? sourceCaption.textContent.trim() : "";
+        caption.hidden = !caption.textContent;
+        dialog.showModal();
+        document.body.classList.add("image-viewer-open");
+        if (preview.complete) {
+          fitImage();
+        }
+      });
+    });
+
+    dialog.addEventListener("click", function (event) {
+      if (event.target !== dialog) {
+        return;
+      }
+      var bounds = dialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+        dialog.close();
+      }
+    });
+    dialog.addEventListener("close", function () {
+      document.body.classList.remove("image-viewer-open");
+      if (trigger) {
+        trigger.focus({ preventScroll: true });
+      }
+    });
+  }
+
   function init() {
     initThemeToggle();
     initVoidPanels();
     initEntryCardScans();
     initClickableCards();
+    initImageViewer();
   }
 
   if (document.readyState === "loading") {
