@@ -727,44 +727,44 @@ body.image-viewer-open {
   outline-offset: 2px;
 }
 
-:is(.image-viewer, .image-viewer-stage) {
+:is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre) {
   scrollbar-width: thin;
   /* Firefox brightens dark thumbs on press; light mode needs a lighter base. */
   scrollbar-color: var(--code-comment) var(--input-bg);
 }
 
 @supports selector(::-webkit-scrollbar) {
-  :is(.image-viewer, .image-viewer-stage) {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre) {
     scrollbar-width: auto;
     scrollbar-color: auto;
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-button {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-button {
     display: none;
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-track,
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-corner {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-track,
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-corner {
     background: var(--panel-bg);
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border: 1px solid var(--scrollbar-thumb-border);
     border-radius: 0;
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb:hover {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
     border-color: var(--scrollbar-thumb-hover);
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb:active {
+  :is(.image-viewer, .image-viewer-stage, .rich-content pre, .article-content pre)::-webkit-scrollbar-thumb:active {
     background: var(--scrollbar-thumb-active);
     border-color: var(--scrollbar-thumb-active);
   }
