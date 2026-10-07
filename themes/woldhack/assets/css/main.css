@@ -19,6 +19,10 @@
   --code-number: #ffd166;
   --code-comment: #6f6d62;
   --code-function: #70d6ff;
+  --scrollbar-thumb: var(--code-comment);
+  --scrollbar-thumb-border: var(--code-comment);
+  --scrollbar-thumb-hover: var(--muted);
+  --scrollbar-thumb-active: var(--muted);
   --max-width: 1080px;
   --footer-height: 88px;
 }
@@ -65,6 +69,10 @@ html.is-light body {
   --code-number: #b45309;
   --code-comment: #8f8a7b;
   --code-function: #0f6ea6;
+  --scrollbar-thumb: var(--input-border);
+  --scrollbar-thumb-border: var(--code-muted);
+  --scrollbar-thumb-hover: var(--muted);
+  --scrollbar-thumb-active: var(--text);
 }
 
 a {
@@ -717,7 +725,8 @@ body.image-viewer-open {
 
 :is(.image-viewer, .image-viewer-stage) {
   scrollbar-width: thin;
-  scrollbar-color: var(--muted) var(--panel-bg);
+  /* Firefox brightens dark thumbs on press; light mode needs a lighter base. */
+  scrollbar-color: var(--code-comment) var(--input-bg);
 }
 
 @supports selector(::-webkit-scrollbar) {
@@ -741,13 +750,19 @@ body.image-viewer-open {
   }
 
   :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb {
-    background: var(--muted);
+    background: var(--scrollbar-thumb);
+    border: 1px solid var(--scrollbar-thumb-border);
     border-radius: 0;
   }
 
-  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb:hover,
+  :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+    border-color: var(--scrollbar-thumb-hover);
+  }
+
   :is(.image-viewer, .image-viewer-stage)::-webkit-scrollbar-thumb:active {
-    background: var(--accent);
+    background: var(--scrollbar-thumb-active);
+    border-color: var(--scrollbar-thumb-active);
   }
 }
 
