@@ -661,6 +661,19 @@ html.is-light .content-card .card-scan-bg {
   margin: 0;
 }
 
+.screenshot-row figure {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.screenshot-row figure img {
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
 .site-footer {
   margin-top: 18px;
   padding-top: 14px;
