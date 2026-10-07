@@ -548,6 +548,7 @@ html.is-light .content-card .card-scan-bg {
 .rich-content .chroma .kp,
 .rich-content .chroma .kr,
 .rich-content .chroma .kt,
+.rich-content .chroma .nt,
 .rich-content .chroma .ow,
 .article-content .chroma .k,
 .article-content .chroma .kc,
@@ -556,6 +557,7 @@ html.is-light .content-card .card-scan-bg {
 .article-content .chroma .kp,
 .article-content .chroma .kr,
 .article-content .chroma .kt,
+.article-content .chroma .nt,
 .article-content .chroma .ow {
   color: var(--code-keyword);
 }
@@ -610,21 +612,18 @@ html.is-light .content-card .card-scan-bg {
 
 .rich-content .chroma .nf,
 .rich-content .chroma .fm,
+.rich-content .chroma .nb,
+.rich-content .chroma .bp,
 .article-content .chroma .nf,
-.article-content .chroma .fm {
+.article-content .chroma .fm,
+.article-content .chroma .nb,
+.article-content .chroma .bp {
   color: var(--code-function);
 }
 
 .rich-content .chroma .na,
 .article-content .chroma .na {
   color: var(--accent);
-}
-
-.rich-content .chroma .nb,
-.rich-content .chroma .bp,
-.article-content .chroma .nb,
-.article-content .chroma .bp {
-  color: var(--code-muted);
 }
 
 .rich-content .chroma .o,

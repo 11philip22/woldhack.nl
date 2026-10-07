@@ -19,13 +19,13 @@ Make sure python3.6+ is installed.
 ![Screenshot_2021-10-20_16-07-55](screenshot-2021-10-20-16-07-55.png)  
 
 Install the `psutil` python module
-```
+```bash
 pip install psutil
 ```
 ### Compile LLVM
 Open the Visual Studio developer console and use the commands bellow to generate a visual studio solution to compile llvm.  
 Please also checkout all availbe cmake flags at: https://llvm.org/docs/CMake.html#options-and-variables.
-```
+```bash
 git clone https://github.com/llvm/llvm-project.git llvm
 cd llvm
 cmake -S llvm -B build -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_USE_LINKER=lld -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_INSTALL_PREFIX="C:\llvm" -Thost=x64
@@ -54,14 +54,14 @@ char str1[20] = "I love ";
 char str2[12] = "11philip22\n";
 
 int main() {
-	int x = 1;
-	int y = 2;
-	printf("hello world %d\n", (x + y) * (x + y));
-	char* newStr = _strdup(str1);
-	strcat_s(newStr, 20, str2);
-	printf("%s", newStr);
-
-	return 0;
+    int x = 1;
+    int y = 2;
+    printf("hello world %d\n", (x + y) * (x + y));
+    char* newStr = _strdup(str1);
+    strcat_s(newStr, 20, str2);
+    printf("%s", newStr);
+  
+    return 0;
 }
 
 ```
@@ -72,7 +72,7 @@ To use our newly build toolchain create a file inside any Visual Studio solution
 <Project>
   <PropertyGroup>
     <LLVMInstallDir>C:\llvm</LLVMInstallDir>
-	<LLVMToolsVersion>14.0.0</LLVMToolsVersion>
+    <LLVMToolsVersion>14.0.0</LLVMToolsVersion>
   </PropertyGroup>
 </Project>
 ```

@@ -34,14 +34,14 @@ ISE is Xilinx's software for building FPGA designs. The spartan 6 FPGA uses this
 
 [Docked-ISE-147](https://github.com/I-A-S/Docked-ISE-147) packages ISE for command-line use in a Linux container.
 
-```powershell
+```bash
 git clone https://github.com/I-A-S/Docked-ISE-147.git
 cd Docked-ISE-147
 ```
 
 The image build needs the full Linux installer, `Xilinx_ISE_DS_Lin_14.7_1015_1.tar`, in the repository's `Resources` directory:
 
-```powershell
+```bash
 docker build -t docked-ise-147 .
 ```
 
@@ -158,7 +158,7 @@ A blinking LED can give you a pass or fail result, but when you want to see what
 
 JTAGBone gives the PC access to those control registers through the same HS3 programmer. On Windows, OpenOCD handles the programmer, and a Python bridge connects it to a LiteX server on `localhost:1234`:
 
-```powershell
+```
 & .\.venv-litescope\Scripts\python.exe .\litescope\litex_jtag_server_windows.py `
     --config .\litescope\openocd-hs3-spartan6.cfg `
     --openocd (Get-Command openocd.exe).Source
@@ -209,7 +209,7 @@ finally:
 
 With `capture.py` in the project root, the command in a second terminal is:
 
-```powershell
+```
 & .\.venv-litescope\Scripts\python.exe .\capture.py
 ```
 
