@@ -8,6 +8,7 @@
   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
   version="1.1"
   width="56.9844mm" height="49.9994mm" viewBox="-2.0 -2.0 56.9844 49.9994">
+<g mask="url(#drill-holes)">
 <rect x="0" y="0" width="53" height="46" fill="#161a20"/>
 
 <title>SVG Image created as pcb-layout-source.svg date 2026-10-02T17:36:43 </title>
@@ -7077,7 +7078,11 @@ L53.0000 46.0000
 L0.0000 46.0000
 " />
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+</g>
+<defs>
+<mask id="drill-holes" maskUnits="userSpaceOnUse" x="-2.0" y="-2.0" width="56.9844" height="49.9994" style="mask-type:luminance">
+<rect x="-2.0" y="-2.0" width="56.9844" height="49.9994" fill="#FFFFFF"/>
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="21.7000" cy="40.5000" r="0.1500" /> 
 <circle cx="2.0000" cy="24.0000" r="0.1500" /> 
 <circle cx="15.0000" cy="31.0000" r="0.1500" /> 
@@ -7114,14 +7119,14 @@ L0.0000 46.0000
 <circle cx="2.3000" cy="36.7500" r="0.6000" /> 
 </g>
 <g style="fill:none; 
-stroke:#FFFFFF; stroke-width:0.9000; stroke-opacity:1; 
+stroke:#000000; stroke-width:0.9000; stroke-opacity:1;
 stroke-linecap:round; stroke-linejoin:round;">
 <path d="M3.1000 28.6500
 L1.5000 28.6500
 " />
 </g>
 <g style="fill:none; 
-stroke:#FFFFFF; stroke-width:0.9000; stroke-opacity:1; 
+stroke:#000000; stroke-width:0.9000; stroke-opacity:1;
 stroke-linecap:round; stroke-linejoin:round;">
 <path d="M3.1000 40.3500
 L1.5000 40.3500
@@ -7131,124 +7136,126 @@ L1.5000 40.3500
 <circle cx="42.5000" cy="36.9000" r="0.6500" /> 
 <circle cx="42.5000" cy="32.1000" r="0.6500" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="50.6300" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="48.0900" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="45.5500" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="43.0100" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="40.4700" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="37.9300" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="35.3900" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="32.8500" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="30.3100" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="27.7700" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="25.2300" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="22.6900" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="20.1500" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="17.6100" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="15.0700" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="12.5300" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="9.9900" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="7.4500" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="4.9100" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="2.3700" cy="3.8800" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="50.6300" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="48.0900" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="45.5500" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="43.0100" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="40.4700" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="37.9300" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="35.3900" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="32.8500" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="30.3100" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="27.7700" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="25.2300" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="22.6900" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="20.1500" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="17.6100" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="15.0700" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="12.5300" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="9.9900" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="7.4500" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="4.9100" cy="19.1200" r="0.5000" /> 
 </g>
-<g style="fill:#FFFFFF; fill-opacity:1.0000; stroke:none;">
+<g style="fill:#000000; fill-opacity:1.0000; stroke:none;">
 <circle cx="2.3700" cy="19.1200" r="0.5000" /> 
 </g> 
+</mask>
+</defs>
 </svg>
