@@ -13,10 +13,10 @@ In this post I will explain on how to integrate llvm with visual studio
 ### Prerequisites
 Install cmake.  
 Install both clang extensions in Visual Studio.  
-![Screenshot_2021-10-20_16-09-35](screenshot-2021-10-20-16-09-35.png)  
+![Screenshot_2021-10-20_16-09-35](images/screenshot-2021-10-20-16-09-35.png)  
 
 Make sure python3.6+ is installed.  
-![Screenshot_2021-10-20_16-07-55](screenshot-2021-10-20-16-07-55.png)  
+![Screenshot_2021-10-20_16-07-55](images/screenshot-2021-10-20-16-07-55.png)  
 
 Install the `psutil` python module
 ```bash
@@ -31,14 +31,14 @@ cd llvm
 cmake -S llvm -B build -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_USE_LINKER=lld -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_INSTALL_PREFIX="C:\llvm" -Thost=x64
 ```
 This creates the Visual Studio solution in `./llvm/build`.
-![Screenshot_2021-10-20_16-23-54](screenshot-2021-10-20-16-23-54.png)  
+![Screenshot_2021-10-20_16-23-54](images/screenshot-2021-10-20-16-23-54.png)  
 
 Since compilation will take a really long time i suggest to set the solution's configuration to `Release`.  
 Now build the `ALL_BUILD` project to compile llvm.  
 
 <div class="screenshot-row">
-  <img src="screenshot-2021-10-20-16-26-23.png" alt="Visual Studio Solution Explorer with ALL_BUILD selected">
-  <img src="screenshot-2021-10-21-09-52-07.png" alt="Visual Studio Solution Explorer with INSTALL selected">
+  <img src="images/screenshot-2021-10-20-16-26-23.png" alt="Visual Studio Solution Explorer with ALL_BUILD selected">
+  <img src="images/screenshot-2021-10-21-09-52-07.png" alt="Visual Studio Solution Explorer with INSTALL selected">
 </div>
 
 Run the `INSTALL` project to install llvm to `C:\llvm`
@@ -66,7 +66,7 @@ int main() {
 
 ```
 In the project property page set `Platform Toolset` to `LLVM (clang-cl)`.  
-![Screenshot_2021-10-21_11-17-16](screenshot-2021-10-21-11-17-16.png)
+![Screenshot_2021-10-21_11-17-16](images/screenshot-2021-10-21-11-17-16.png)
 To use our newly build toolchain create a file inside any Visual Studio solution or project called `Directory.build.props` with the contents:
 ```xml
 <Project>

@@ -10,7 +10,7 @@ On my Windows setup, running ISE in a VM means disabling WSL. So I run ISE 14.7 
 
 <!--more-->
 
-{{< figure src="spartan6-board.webp" alt="Spartan-6 board connected to a USB3300 ULPI module and JTAG programmer" caption="S602 board on the right, USB3300 module on the left, and JTAG programmer at the top." width="480" >}}
+{{< figure src="images/spartan6-board.webp" alt="Spartan-6 board connected to a USB3300 ULPI module and JTAG programmer" caption="S602 board on the right, USB3300 module on the left, and JTAG programmer at the top." width="480" >}}
 
 ## FPGAs
 
@@ -26,7 +26,7 @@ The FPGA contains the test logic, while the [USB3300](https://ww1.microchip.com/
 
 Programming uses a separate connection. The [Digilent HS3](https://digilent.com/shop/jtag-hs3-programming-cable/) is a USB-to-JTAG programmer. JTAG provides access to the FPGA for loading a bitstream and, with the debug hardware described below, reading internal signals.
 
-{{< figure src="fpga-connections.svg" link="fpga-connections.svg" alt="The PC connects through USB to the Digilent HS3, then through JTAG to the FPGA. The USB host connects to the USB3300 PHY, which connects to the FPGA over ULPI and supplies its 60 MHz clock." caption="The USB test and JTAG programming connections. The USB host can be the same PC used for programming." >}}
+{{< figure src="images/fpga-connections.svg" link="images/fpga-connections.svg" alt="The PC connects through USB to the Digilent HS3, then through JTAG to the FPGA. The USB host connects to the USB3300 PHY, which connects to the FPGA over ULPI and supplies its 60 MHz clock." caption="The USB test and JTAG programming connections. The USB host can be the same PC used for programming." >}}
 
 ## Setup
 
@@ -217,7 +217,7 @@ With `capture.py` in the project root, the command in a second terminal is:
 
 The diagram shows what that failure could look like. `ulpi_nxt` stays at 0, so the FPGA is still waiting for the PHY to acknowledge the command. The state then changes from `ST_WAIT_COMMAND` to `ST_FAIL`, and the error code becomes 1. That narrows the next checks to the ULPI connection and its timing.
 
-{{< figure src="capture-example.svg" link="capture-example.svg" alt="Illustrative capture of a register-command timeout. The PHY acknowledgement signal ulpi_nxt stays low. The test changes from ST_WAIT_COMMAND to ST_FAIL as the error code becomes 1, which triggers the capture. Samples are retained before and after the trigger." caption="Illustrative timeout capture, with only a few of the 1024 samples shown. The signal names are shortened here." >}}
+{{< figure src="images/capture-example.svg" link="images/capture-example.svg" alt="Illustrative capture of a register-command timeout. The PHY acknowledgement signal ulpi_nxt stays low. The test changes from ST_WAIT_COMMAND to ST_FAIL as the error code becomes 1, which triggers the capture. Samples are retained before and after the trigger." caption="Illustrative timeout capture, with only a few of the 1024 samples shown. The signal names are shortened here." >}}
 
 ## Agent skills
 

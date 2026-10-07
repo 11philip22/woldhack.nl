@@ -17,11 +17,11 @@ I started with only the requirements: a USB-A male plug and female socket, USB 2
 This is the first board design Codex produced.
 
 <div class="screenshot-row">
-{{< figure src="bluepill-tilted.png" link="bluepill-tilted.png" alt="3D render of the USB VBUS switch board with a USB-A plug, USB-A socket and STM32 Blue Pill" caption="First 3D render of the board." >}}
+{{< figure src="images/bluepill-tilted.png" link="images/bluepill-tilted.png" alt="3D render of the USB VBUS switch board with a USB-A plug, USB-A socket and STM32 Blue Pill" caption="First 3D render of the board." >}}
 
-{{< figure src="pcb-layout.svg" link="pcb-layout.svg" alt="PCB layout showing the Blue Pill socket, USB-A input and output, VBUS switch components and routed traces" caption="First PCB layout." >}}
+{{< figure src="images/pcb-layout.svg" link="images/pcb-layout.svg" alt="PCB layout showing the Blue Pill socket, USB-A input and output, VBUS switch components and routed traces" caption="First PCB layout." >}}
 
-{{< figure src="schematic.svg" link="schematic.svg" alt="Schematic showing the Blue Pill socket, USB-A input and output, and VBUS switching circuit" caption="First schematic." >}}
+{{< figure src="images/schematic.svg" link="images/schematic.svg" alt="Schematic showing the Blue Pill socket, USB-A input and output, and VBUS switching circuit" caption="First schematic." >}}
 </div>
 
 ### Switch control
@@ -40,9 +40,9 @@ I wasn't happy with the first layout. C3 sat above the USB data pair, and the ot
 Codex moved C3 below the data pair and grouped the switch components along the lower edge of the board. The schematic stayed the same; this was a placement and routing change.
 
 <div class="screenshot-row">
-{{< figure src="bluepill-placement.png" link="bluepill-placement.png" alt="3D render after Codex grouped the VBUS switch components along the bottom of the board" caption="Board after Codex rearranged the components." >}}
+{{< figure src="images/bluepill-placement.png" link="images/bluepill-placement.png" alt="3D render after Codex grouped the VBUS switch components along the bottom of the board" caption="Board after Codex rearranged the components." >}}
 
-{{< figure src="pcb-layout-placement.svg" link="pcb-layout-placement.svg" alt="PCB layout with C3 below the USB data pair and the switch components grouped along the bottom edge" caption="PCB layout after the placement change." >}}
+{{< figure src="images/pcb-layout-placement.svg" link="images/pcb-layout-placement.svg" alt="PCB layout with C3 below the USB data pair and the switch components grouped along the bottom edge" caption="PCB layout after the placement change." >}}
 </div>
 
 ## Manual fixes
@@ -50,11 +50,11 @@ Codex moved C3 below the data pair and grouped the switch components along the l
 Codex got the layout much closer, but I still made a pass by hand. I put R2 and R3 together beside Q1, tightened the placement around U1 and C3, and cleaned up the traces and silkscreen. I also redrew the schematic with explicit wires and ground symbols so the connections were easier to follow.
 
 <div class="screenshot-row">
-{{< figure src="bluepill-manual.png" link="bluepill-manual.png" alt="3D render of the board after manual component placement and silkscreen cleanup" caption="Board after my manual changes." >}}
+{{< figure src="images/bluepill-manual.png" link="images/bluepill-manual.png" alt="3D render of the board after manual component placement and silkscreen cleanup" caption="Board after my manual changes." >}}
 
-{{< figure src="pcb-layout-manual.svg" link="pcb-layout-manual.svg" alt="PCB layout after manual cleanup of the VBUS switch components, traces, and labels" caption="PCB layout after the manual pass." >}}
+{{< figure src="images/pcb-layout-manual.svg" link="images/pcb-layout-manual.svg" alt="PCB layout after manual cleanup of the VBUS switch components, traces, and labels" caption="PCB layout after the manual pass." >}}
 
-{{< figure src="schematic-manual.svg" link="schematic-manual.svg" alt="USB VBUS switch schematic with wiring and ground connections drawn between the components" caption="Schematic after the manual pass." >}}
+{{< figure src="images/schematic-manual.svg" link="images/schematic-manual.svg" alt="USB VBUS switch schematic with wiring and ground connections drawn between the components" caption="Schematic after the manual pass." >}}
 </div>
 
 Codex took the board from a short set of requirements to a schematic and routed PCB. I still had to review the result and make a few manual changes to the placement, traces and schematic.
