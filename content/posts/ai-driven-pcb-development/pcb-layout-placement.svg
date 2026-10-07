@@ -20,7 +20,7 @@
     }
   }
 </style>
-<rect x="-2.0" y="-2.0" width="56.9844" height="49.9994" fill="var(--bg)"/>
+<rect x="0" y="0" width="53" height="46" fill="var(--bg)"/>
 
 <title id="title">PCB layout after Codex rearranged the components</title>
   <desc id="desc">C3 sits below the USB data traces, and the VBUS switch components are grouped along the lower edge of the board.</desc>

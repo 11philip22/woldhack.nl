@@ -20,7 +20,7 @@
     }
   }
 </style>
-<rect x="-2.0" y="-2.0" width="56.9844" height="49.9994" fill="var(--bg)"/>
+<rect x="0" y="0" width="53" height="46" fill="var(--bg)"/>
 
 <title id="title">PCB layout after manual cleanup</title>
   <desc id="desc">PCB layout with grouped switch components, revised traces, and cleaned up labels.</desc>

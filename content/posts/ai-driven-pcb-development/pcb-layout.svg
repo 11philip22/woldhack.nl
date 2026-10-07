@@ -20,7 +20,7 @@
     }
   }
 </style>
-<rect x="-2.0" y="-2.0" width="56.9844" height="49.9994" fill="var(--bg)"/>
+<rect x="0" y="0" width="53" height="46" fill="var(--bg)"/>
 
 <title id="title">First PCB layout of the USB VBUS switch</title>
   <desc id="desc">PCB layout showing the Blue Pill socket, USB-A input and output, VBUS switch components, and routed USB data pair.</desc>
