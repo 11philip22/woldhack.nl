@@ -645,6 +645,10 @@ html.is-light .content-card .card-scan-bg {
   display: block;
 }
 
+.article-content figcaption {
+  text-align: center;
+}
+
 .rich-content img,
 .article-content img {
   display: block;
