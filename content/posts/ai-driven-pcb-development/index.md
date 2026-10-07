@@ -9,7 +9,16 @@ title: "AI driven pcb development"
 - pick parts trough jlc pcb specifications
 - downloads footprints
 - extra switch explanation
-- result
+- first result
+
+- ai placement
+
+```
+› c3 should be under the d+ and d- so we domt have to route vbus out under the differential pair.
+
+  all other componenents are scattered over the board. group them toghether, align them and make it look nice
+```
+
 - manual fixes
 - result
 - closing
