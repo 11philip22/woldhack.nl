@@ -1,0 +1,3 @@
+{{ $notes := .Page.Resources.Get "artifacts/design-notes.md" }}
+{{ $file := resources.FromString "posts/ai-driven-pcb-development/artifacts/design-notes.md" $notes.RawContent }}
+<a href="{{ $file.RelPermalink }}">design notes</a>
