@@ -486,6 +486,11 @@ html.is-light .content-card .card-scan-bg {
   letter-spacing: 0.06em;
   text-align: left;
   text-transform: uppercase;
+  overflow-wrap: normal;
+}
+
+:is(.rich-content, .article-content) :is(th, td)[style*="right"] {
+  white-space: nowrap;
 }
 
 :is(.rich-content, .article-content) table a {
@@ -570,7 +575,7 @@ html.is-light .content-card .card-scan-bg {
 .article-content .mermaid svg {
   display: block;
   margin: 0 auto;
-  min-width: 540px;
+  max-height: 800px;
   height: auto;
 }
 
