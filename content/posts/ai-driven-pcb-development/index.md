@@ -10,11 +10,11 @@ Working with Codex on a ULPI project kept ending in the same place: it asked me 
 
 That meant giving Codex a way to work with KiCad. On Windows, KiCad's writes to the registry and files in Documents kept running into Codex CLI's sandbox, so I put both in [Docker](https://github.com/11philip22/codex-kikad-docker).
 
-I started with only the requirements: a USB-A male plug and female socket, USB 2.0 high-speed support, a VBUS switch controlled by an STM32 Blue Pill, and a socket for the Blue Pill. We went back and forth on the details before I asked Codex to write up {{< design-notes-link >}}. While writing the doc, Codex looked for parts at JLCPCB through the [`pcbparts` MCP server](https://github.com/Averyy/pcbparts-mcp). I checked the doc and told Codex to implement it. When it started building the board, it also downloaded the required symbols and footprints with [easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py).
+I started with only the requirements: a USB-A male plug and female socket, USB 2.0 high-speed support, a VBUS switch controlled by an STM32 Blue Pill, and a socket for the Blue Pill. We went back and forth on the details before I asked Codex to write up [design notes](files/design-notes/). While writing the doc, Codex looked for parts at JLCPCB through the [`pcbparts` MCP server](https://github.com/Averyy/pcbparts-mcp). I checked the doc and told Codex to implement it. When it started building the board, it also downloaded the required symbols and footprints with [easyeda2kicad.py](https://github.com/uPesy/easyeda2kicad.py).
 
 ## First result
 
-Codex built the first board with [build_board.py](artifacts/build_board.py). The script defines the parts and nets, writes the schematic, then uses KiCad's `pcbnew` API to place the footprints and route the PCB. This is the result.
+Codex built the first board with [build_board.py](files/build-board/). The script defines the parts and nets, writes the schematic, then uses KiCad's `pcbnew` API to place the footprints and route the PCB. This is the result.
 
 <div class="screenshot-row">
 {{< figure src="images/bluepill-tilted.png" link="images/bluepill-tilted.png" alt="3D render of the USB VBUS switch board with a USB-A plug, USB-A socket and STM32 Blue Pill" caption="First 3D render of the board." >}}

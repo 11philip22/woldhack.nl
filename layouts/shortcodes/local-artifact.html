@@ -1,0 +1,2 @@
+{{ $source := os.ReadFile (.Get "src") }}
+{{ transform.Highlight $source (.Get "type") }}

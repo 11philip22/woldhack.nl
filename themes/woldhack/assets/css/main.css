@@ -550,6 +550,8 @@ html.is-light .content-card .card-scan-bg {
 .rich-content .chroma .kt,
 .rich-content .chroma .nt,
 .rich-content .chroma .ow,
+.rich-content .chroma .gh,
+.rich-content .chroma .gu,
 .article-content .chroma .k,
 .article-content .chroma .kc,
 .article-content .chroma .kd,
@@ -558,7 +560,9 @@ html.is-light .content-card .card-scan-bg {
 .article-content .chroma .kr,
 .article-content .chroma .kt,
 .article-content .chroma .nt,
-.article-content .chroma .ow {
+.article-content .chroma .ow,
+.article-content .chroma .gh,
+.article-content .chroma .gu {
   color: var(--code-keyword);
 }
 
