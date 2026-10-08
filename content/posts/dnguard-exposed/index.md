@@ -32,9 +32,9 @@ After that, it gave me a link to [PVACreator6-Installer.exe on WhiteHatBox](http
 
 ## Finding the actual download
 
-I checked the installer with `diec.exe`, which identified it as a .NET assembly, and decompiled it with dnSpy. I then asked Codex to find the URL it used to download the application.
+I checked the installer with `diec.exe`, which identified it as a .NET assembly, and decompiled it with dnSpy. It was a downloader, so I asked Codex to find the URL it used to download the application.
 
-The installer turned out to be a downloader. Its Windows version-information `Comments` field holds an encrypted API configuration. Codex traced that configuration to a metadata endpoint which returns the current application package and launcher URLs.
+Its Windows version-information `Comments` field holds an encrypted API configuration. Codex traced that configuration to a metadata endpoint which returns the current application package and launcher URLs.
 
 The installer does not have a fixed application download URL sitting in its code. `Downloader.Program` loads an embedded `DownloaderCore` assembly from `Downloader.Properties.Resources`. Exporting that DLL and decompiling it exposes the download logic in `DownloaderCore.API`.
 
