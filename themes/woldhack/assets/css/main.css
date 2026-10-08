@@ -527,6 +527,22 @@ html.is-light .content-card .card-scan-bg {
   color: inherit;
 }
 
+.article-content pre.mermaid {
+  margin: 24px 0;
+  padding: 20px;
+  background: #f5f5f5 !important;
+  color: #222 !important;
+  border: 1px solid var(--panel-border);
+  font-family: Arial, sans-serif;
+}
+
+.article-content .mermaid svg {
+  display: block;
+  margin: 0 auto;
+  min-width: 540px;
+  height: auto;
+}
+
 .rich-content .chroma .c,
 .rich-content .chroma .ch,
 .rich-content .chroma .cm,

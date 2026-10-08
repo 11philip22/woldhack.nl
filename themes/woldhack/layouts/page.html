@@ -14,6 +14,13 @@
       {{ .Content }}
     </div>
 
+    {{ if .Store.Get "hasMermaid" }}
+      <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict', fontFamily: 'Arial, sans-serif', flowchart: { htmlLabels: false } });
+      </script>
+    {{ end }}
+
     {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
   </article>
 {{ end }}
