@@ -1,6 +1,6 @@
 ---
 title: "design-notes.md"
-draft: true
+draft: false
 url: "/posts/ai-driven-pcb-development/files/design-notes/"
 build:
   list: never

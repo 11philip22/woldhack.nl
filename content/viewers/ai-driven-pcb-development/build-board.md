@@ -1,6 +1,6 @@
 ---
 title: "build_board.py"
-draft: true
+draft: false
 url: "/posts/ai-driven-pcb-development/files/build-board/"
 build:
   list: never
