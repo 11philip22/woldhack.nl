@@ -1,6 +1,6 @@
 ---
 date: "2026-10-07T00:00:00+02:00"
-draft: true
+draft: false
 title: "AI driven pcb development"
 ---
 
