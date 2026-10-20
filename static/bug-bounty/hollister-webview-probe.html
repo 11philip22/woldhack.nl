@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Hollister WebView test — HCO-WV-20261020</title>
+<style>
+  body { font: 18px/1.5 system-ui,sans-serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .75rem 1rem; }
+  pre { padding: 1rem; background: #eee; white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<h1>HCO-WV-20261020</h1>
+<p>Controlled WebView test. Use an emulator with a synthetic location.
+Location is requested only when you press the button, and results stay on this page.</p>
+<h2>Page context</h2>
+<pre id="context"></pre>
+<button id="location" type="button">Request emulator location</button>
+<pre id="result" aria-live="polite">No location request made.</pre>
+<p>Record whether this is inside Hollister or a separate browser, the app's
+Android permissions, and any website permission prompt. A successful result
+in a browser after approving its prompt is not evidence against Hollister.</p>
+<script>
+  const context = document.getElementById("context");
+  const result = document.getElementById("result");
+  const button = document.getElementById("location");
+  context.textContent = JSON.stringify({
+    marker: "HCO-WV-20261020",
+    origin: window.location.origin,
+    secureContext: window.isSecureContext,
+    androidBridgePresent: typeof window.Android !== "undefined",
+    userAgent: navigator.userAgent
+  }, null, 2);
+  button.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      result.textContent = "Geolocation API unavailable.";
+      return;
+    }
+    button.disabled = true;
+    result.textContent = "Waiting for location or an error...";
+    const finish = value => {
+      result.textContent = JSON.stringify(value, null, 2);
+      button.disabled = false;
+    };
+    navigator.geolocation.getCurrentPosition(
+      position => finish({
+        status: "success",
+        origin: window.location.origin,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracyMetres: position.coords.accuracy,
+        timestamp: position.timestamp
+      }),
+      error => finish({status: "error", code: error.code, message: error.message}),
+      {enableHighAccuracy: true, maximumAge: 0, timeout: 15000}
+    );
+  });
+</script>
+</html>
