@@ -566,9 +566,8 @@ html.is-light .content-card .card-scan-bg {
 }
 
 .article-content pre.mermaid {
-  width: fit-content;
-  margin: 24px auto;
-  padding: 12px;
+  margin: 24px 0;
+  padding: 20px;
   border: 1px solid var(--code-border);
   font-family: inherit;
 }
@@ -576,8 +575,7 @@ html.is-light .content-card .card-scan-bg {
 .article-content .mermaid svg {
   display: block;
   margin: 0 auto;
-  max-width: 100%;
-  max-height: min(60vh, 36rem);
+  max-height: 800px;
   height: auto;
 }
 
