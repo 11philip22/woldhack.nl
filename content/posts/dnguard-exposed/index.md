@@ -159,6 +159,24 @@ DNGuard also adds generated methods around the application methods, including al
 
 `HVMRun64.dll` intercepts the JIT compilation entry point. When the CLR requests a protected method, DNGuard's dispatcher supplies replacement IL to the original JIT. While compiling that IL, the JIT calls back into the runtime for references, local-variable types and exception handlers. DNGuard can answer through its own callback interface, so a `call` operand that is meaningless in the file becomes meaningful only inside that runtime context.
 
+The ordinary forwarding adapter at `HVMRun64+0x23D60` makes that handoff visible in Ghidra. It reloads the saved compiler object and calls the stored compiler entry. These are native instruction RVAs within this HVM build; the absolute operand uses its preferred image base, `0x180000000`:
+
+```asm
+023D60  sub rsp,38h
+023D64  mov rax,[18009FBD8h]
+023D6B  mov [rsp+28h],r9
+023D70  mov r9d,[rcx+0F0h]
+023D77  mov r10,[rax+50h]
+023D7B  mov [rsp+20h],r8
+023D80  mov r8,rdx
+023D83  mov rdx,[rcx+0F8h]
+023D8A  mov r11,rcx
+023D8D  mov rcx,[r10+28h]       ; saved compiler object
+023D91  call qword ptr [r11+108h] ; stored original compiler entry
+023D98  add rsp,38h
+023D9C  ret
+```
+
 ```mermaid
 flowchart TD
     accTitle: How DNGuard presents different code to a decompiler and the JIT
@@ -221,6 +239,16 @@ For the predicate, the active alias is `0x06001E42`. I have to ask DNGuard to co
 
 The native dispatcher gave me a way to tell them apart. It exposes a table with a 32-bit payload word for each MethodDef row. In my inputs, the high byte identifies categories such as application IL, active aliases and decoys. Other bytes help select the active alias within a family.
 
+Here are three rows from `dnguard-method-payload-words.bin`. Each word is little-endian, at byte offset `(MethodDef RID - 1) * 4` in the captured table:
+
+| Role in this sample | Method token | Table offset | Raw bytes | Payload word |
+| --- | --- | --- | --- | --- |
+| Original | `0x06001DC8` | `0x771C` | `59 31 00 20` | `0x20003159` |
+| Active alias | `0x06001E42` | `0x7904` | `D2 A4 66 44` | `0x4466A4D2` |
+| Decoy | `0x06001E41` | `0x7900` | `01 12 14 66` | `0x66141201` |
+
+The `0x20`, `0x44` and `0x66` high bytes distinguish these rows' roles. The payload words are not native addresses, and these observed categories belong to this sample.
+
 ```mermaid
 flowchart TD
     accTitle: Selecting an active alias without guessing from its signature
@@ -244,23 +272,65 @@ Native capture happens in a separate Windows x64 worker under the .NET Framework
 
 The hooks depend on exact function locations, instruction prefixes, callback-table slots and structure layouts. I put those in a compatibility profile with hashes of `HVMRun64.dll`, `clr.dll` and `clrjit.dll`; the worker checks them before loading the target. A familiar filename is no protection against reading the wrong memory from a different build.
 
-Hook order caused one of the less obvious failures. When I changed the compiler prologue too early, DNGuard inspected my patched bytes instead of the original and its setup went down the wrong path. The working order is:
+The probe preserves the original compiler prologue while HVM installs itself. The working order is:
 
 1. Warm up Framework compilation and obtain the original compiler through `getJit`.
 2. Save and validate its address and instruction prefix.
-3. Load HVM and let its installer inspect the original compiler prologue.
+3. Load HVM while the original compiler prologue is still unmodified.
 4. Wait until HVM replaces the compiler table entry.
 5. Use MinHook to detour the saved original compiler, then load the target assembly.
 
 This leaves HVM's installation intact and puts my observer where HVM eventually calls the original compiler.
 
+For the pinned JIT, the saved compiler entry is `clrjit+0x7A6E0`. Its validated 16-byte prefix is:
+
+```text
+48 89 5C 24 08 57 48 83 EC 60 48 8B 0D 5F 63 0A
+```
+
+`Probe.cpp::dg_initialize` checks that address and prefix, loads HVM, waits for the compiler-table entry to point into HVM, and then enables the detour. These bytes and the implementation establish the working setup; they are not a before/after recording of a failed early-hook attempt.
+
+<!-- Evidence pending: original versus patched compiler bytes, or a debugger trace, from the failed early-hook experiment. -->
+
 The worker resolves a method and calls `RuntimeHelpers.PrepareMethod`, so I do not need to invent arguments and invoke every application method. It runs the target's module initializer inside the first capture request because initialization can trigger useful compilations of its own. That initializer does execute target code; string getters are the other case that needs a real invocation.
 
 ### Proving ownership
 
-I initially assumed the next compiler call after a request would be my method. Module initialization, nested compilation and background work quickly disproved that.
+A request does not give me exclusive use of the compiler. Module initialization, nested compilation and background work can share that boundary, so each recorded body has to be bound to its request.
 
 The probe now records request, compilation, parent and thread identifiers, plus the dispatcher handle, compiler handle and method-info pointer. I accept a different compiler handle through a dispatcher relationship only when the observation belongs to the same method-info record. Shared generic code gets an additional CLR-family check. If two application bodies still match, I leave the capture failed rather than guess.
+
+This is the admission filter in `Probe.cpp::compile`, with whitespace expanded and its generic-candidate comment shortened. `method` is the current method-info pointer; matching the module only admits a generic candidate for later validation:
+
+```cpp
+uintptr_t handle = at<uintptr_t>(method, 0);
+uintptr_t source = dispatcher && dispatcher->method == method
+    ? dispatcher->handle : handle;
+bool related = handle == requestedHandle ||
+    (dispatcher && dispatcher->method == method && source == requestedHandle);
+// Generic candidates still need the worker's exact CLR-family check.
+bool candidate = genericScope && at<uintptr_t>(method, 8) == genericScope;
+if (!related && !candidate)
+    return originalCompile(self, info, method, flags, entry, size);
+```
+
+For example, the saved `full-generics` capture of `0x06000089` contains these fields:
+
+```text
+request_id:             1
+compilation_id:         5
+parent_compilation_id:  0
+thread_id:              25840
+requested_handle:      0x00007FF9886FE410
+dispatcher_handle:     0x00007FF9886FE398
+method_handle:         0x00007FF9886FE398
+typical_method_handle: 0x00007FF9886FE210
+binding_evidence:      exact CLR typical-method family
+```
+
+The requested and compiler handles differ, and the worker records why it accepted the relationship. This is one selected capture, not a timeline of other compilations; ID `5` alone says nothing about what happened in IDs 1–4.
+
+<!-- Evidence pending: a complete request/nested/background compilation timeline, including rejected observations and the final selection. -->
 
 Some `BotModule` aliases surprised me by supplying the original CLR callback table instead of HVM's proxy. The probe supports that route too, checking the table and callback addresses against the pinned `clr.dll`. CLR sometimes also compiles the unchanged metadata error stub; the worker excludes that exact stub only after seeing a distinct HVM body, and keeps the excluded snapshot as evidence.
 
@@ -299,6 +369,19 @@ flowchart TD
 
 Catching the table lookup gets me close, but at that point the argument registers may not be ready. The probe uses MinHook's HDE64 instruction decoder to find the actual indirect call and place an execution breakpoint there. For the pinned CLR, it also checks that the callback target in `RAX` is the expected function before recording anything. A second breakpoint at the return address captures the results.
 
+Here is the actual sequence around a slot-28 lookup in the pinned `clrjit.dll`, with instruction addresses shown as RVAs:
+
+```asm
+76172  mov rcx,[rcx+1AB8h]
+76179  mov rax,[rcx]                  ; callback vtable
+7617C  jne 0D29B2h
+76182  mov rax,[rax+0E0h]             ; slot 28: 0xE0 / 8
+76189  call qword ptr [1801012C0h]    ; CFG dispatch pointer
+7618F  add rsp,20h
+```
+
+The PE load-configuration directory identifies `0x1801012C0` as the Control Flow Guard dispatch pointer. The callback target is in `RAX`: the lookup is at `0x76182`, while the call is at `0x76189`. The saved proxy-table trace associates slot 28 with HVM's `resolveToken` callback at `HVMRun64+0x314F0`.
+
 Page guards are consumed when triggered. With a shared table, I watched unrelated threads steal the guard and make the target callback disappear. A private page keeps the observation attached to its compilation. A `finally` path restores the original table, releases the page and marks abandoned observations incomplete.
 
 All recording inside these observers stays native. Calling managed code there can trigger more compilation in the middle of a capture, so the observers avoid managed reflection and IPC writes. After compilation returns, the worker turns the captured handles into managed descriptions and sends the result to the CLI.
@@ -318,6 +401,28 @@ I keep a worker alive across successful requests. A failed request gets one retr
 Captured IL bytes still are not useful on their own. A `call` operand normally identifies a method through metadata; here it can be a synthetic token whose meaning exists only in DNGuard's callbacks. Copying that number into a new assembly recreates the bytes, not the call.
 
 The predicate makes this concrete. Its captured `callvirt` operand `0x06800004` resolves to `ModelInfo.get_Name()`, while field operand `0x04800005` resolves to the closure's `platform` field. The synthetic numbers alone tell me none of that.
+
+The captured body for alias `0x06001E42` contains:
+
+```il
+IL_0014: ldarg.1
+IL_0015: callvirt 0x06800004
+IL_001A: ldarg.0
+IL_001B: ldfld 0x04800005
+IL_0020: call 0x0A800006
+IL_0025: ret
+```
+
+Using the recorded resolutions, those same instructions read as follows. I shortened the type names and retained the capture offsets; this is symbolic captured IL, before emission changes the offsets and metadata references:
+
+```il
+IL_0014: ldarg.1
+IL_0015: callvirt instance string ModelInfo::get_Name()
+IL_001A: ldarg.0
+IL_001B: ldfld string <>c__DisplayClass4_0::platform
+IL_0020: call bool System.String::op_Equality(string, string)
+IL_0025: ret
+```
 
 `CaptureImporter` decodes the instructions, checks operand lengths and verifies that branch and switch targets land on instruction boundaries. It then matches each token operand to the runtime resolution recorded for that method context and module scope.
 
@@ -346,19 +451,66 @@ After compilation, `Handles` turns native handles into descriptions containing t
 
 I first read local variables from the signature pointer in the method header. Some of those bytes were decoys. I now keep them only as evidence and reconstruct locals from the callbacks the JIT actually used.
 
+The `release-complete` capture of `0x06001DF1`, mapped to original `0x06001DE5`, shows the difference. The signature-pointer prefix describes four `char` locals, but the callbacks identify four reference types:
+
+```text
+Signature-pointer prefix: 07 04 03 03 03 03
+Decoded candidate:        char, char, char, char
+
+Callback-recovered locals, in argument-chain order:
+0  System.Object
+1  API.Controllers.RegisterController+<>c__DisplayClass8_0
+2  PvaCreator2Models.Compaign
+3  System.Exception
+```
+
+All four `getArgType` results are `0x14` (`CLASS`); `getArgClass` supplies the handles that distinguish these types. `Compaign` is the name in the target metadata.
+
 `getArgType` and `getArgClass` give me each local's type, while `getArgNext` links the entries. I walk that chain to recover their order because callback arrival order is not enough. A missing local, broken chain or type conflict fails the capture; filling a gap with `System.Object` could change the method's meaning.
 
+The ordering loop in `Snapshot.cs` is small enough to show directly, with whitespace expanded. Offset `0xD8` is the first local's argument handle in the pinned method-info layout:
+
+```csharp
+var ordered = new List<ulong>();
+ulong cursor = BitConverter.ToUInt64(prefix, 0xD8);
+for (int n = 0; n < localCount; n++)
+{
+    if (!locals.ContainsKey(cursor) || ordered.Contains(cursor))
+        throw new InvalidDataException("Local argument chain cannot be validated.");
+    ordered.Add(cursor);
+    if (n + 1 < localCount && !nextArgs.TryGetValue(cursor, out cursor))
+        throw new InvalidDataException("Missing getArgNext callback for local chain.");
+}
+```
+
 Exception clauses record the protected range, handler range and either a catch type or filter offset. I turn those offsets into instruction references and count catch and filter entry points as reachability roots, so cleanup does not delete code reached only through an exception.
+
+The same capture records two catch clauses. Expanding each offset and length gives these half-open ranges, with all offsets in hexadecimal:
+
+```text
+try [0026,0060) -> handler [0060,006D), catch token 0x01000641
+try [0014,006D) -> handler [006D,0084), catch token 0x01000641
+```
 
 ### Indirect calls
 
 A `calli` instruction calls a function pointer, so I need a standalone calling signature as well as the address. I get it by observing `findSig`, recording the returned signature and following its arguments through the same type callbacks.
 
-Before emission, I compare the calling convention, return type and argument count with the native header, then compare the parameters with the observed traversal. That recovers the real signature used by the protected module initializer; the signature left in the file is another decoy.
+The `findsig-fixed` capture is for `ZYXDNGuarder.CheckString(int, int)`, token `0x06001DE7`. Its captured IL contains `calli 0x11000682` at `IL_005D`. The original PE and the `findSig` result agree on the standalone signature:
+
+```text
+Original PE, token 0x11000682: 02 04 08 0F 03 18 08 08
+findSig signature:            02 04 08 0F 03 18 08 08
+Native header:                callConv=2, returnType=8, argumentCount=4
+Argument traversal codes:     17, 12, 8, 8
+Decoded signature:            unmanaged stdcall int32(char*, native int, int32, int32)
+```
+
+`Emitter.ImportCallSite` compares the parsed calling convention, return type and argument count with the native header, then checks the parameters against the observed traversal. This example confirms the signature used by the JIT; its on-disk signature is not a decoy. It is also a different method from the module initializer, `0x06006E49`, whose original body calls `ZYXDNGuarder.Startup()` and returns.
 
 ## Restoring generic methods
 
-A single capture of `Box<T>.Echo(T value)` with `T = int` fooled my first reconstruction: an `int` local might represent `T`, or it might be a fixed counter. A second capture with `T = long` exposes the difference. The local representing `T` changes; the counter stays an `int`.
+A simple illustration is a generic method with a local of type `T` and a fixed `int` counter. In a capture with `T = int`, both locals look like integers. A second capture with `T = long` exposes the difference: the local representing `T` changes, while the counter stays an `int`. This is an illustrative example, not a captured PVACreator method. The test suite constructs a synthetic `Box<T>.Echo(T value)` fixture and supplies `string` and `long` witnesses for its generic field and local.
 
 ```mermaid
 flowchart TD
@@ -384,34 +536,57 @@ A decompiler can make a bad reconstruction look convincing. The test suite there
 
 ## Making the control flow readable
 
-A valid reconstructed method can still be miserable to read. DNGuard commonly stores a state value and repeatedly jumps to a `switch` that selects the next block.
+A valid reconstructed method can still be miserable to read. Here is the start of the captured body for `MBLite.UI.Profile.UcProxy.Default`, original `0x060017B6`, recovered through alias `0x06006270`:
 
-In this illustrative dispatcher, the useful order is A, B, return, even though every block routes through the same switch:
-
-```mermaid
-flowchart LR
-    accTitle: Recovering direct edges from a proven dispatcher
-    accDescr: Before cleanup, a state variable selects blocks through a shared switch. When each transition can be proven, cleanup redirects the edges to the selected blocks, exposing the sequence A, B, return.
-    subgraph Before["Before cleanup"]
-        direction TB
-        Start["state = 2"] --> Dispatch{"switch state"}
-        Dispatch -->|"2"| A["Work A<br/>state = 0"]
-        A --> Dispatch
-        Dispatch -->|"0"| B["Work B<br/>state = 1"]
-        B --> Dispatch
-        Dispatch -->|"1"| Ret["return"]
-    end
-    subgraph After["After proving the edges"]
-        direction TB
-        CleanA["Work A"] --> CleanB["Work B"] --> CleanRet["return"]
-    end
+```il
+IL_0000: ldc.i4 1912305601
+IL_0005: stloc V_0
+IL_0009: ldloca V_0
+IL_000D: nop
+IL_000E: ldind.i2
+IL_000F: conv.i2
+IL_0010: ldc.i4 937981889
+IL_0015: stloc V_0
+IL_0019: ldloca V_0
+IL_001D: nop
+IL_001E: ldind.i2
+IL_001F: conv.i2
+IL_0020: ceq
+IL_0022: switch (IL_0033, IL_005C, IL_0033)
 ```
+
+On this x64 target, both signed 16-bit loads produce `30657`, so `ceq` produces `1` and selects the second switch target, `IL_005C`. In the emitted assembly, the instructions through `ceq` remain, but the switch becomes:
+
+```il
+IL_0020: ceq
+IL_0022: pop
+IL_0023: br IL_0028
+IL_0028: ldc.i4 1774583809
+```
+
+The selected block has moved from `IL_005C` to `IL_0028`. The `pop` consumes the switch index, preserving the stack effect. For this method, the emission report records three proven branches, 25 removed instructions and zero remaining switches. Its `DispatcherEdges` count is zero: this example demonstrates constant branch folding.
 
 `SsaCleanup` removes a detour only when it can prove which value reaches the branch. It tracks the evaluation stack and eligible locals using Static Single Assignment, or SSA, values. Each assignment gets its own identity; where paths join, a phi value represents the alternatives. If every path carries `7`, the value is still known. If they differ, I leave the uncertainty alone.
 
 IL also moves values on an evaluation stack. A comparison consumes those values, and paths entering an instruction must agree on stack height, so tracking locals alone misses half the state.
 
 The cleanup removes unreachable instructions and propagates known values through arithmetic and branches. A proven branch becomes its corresponding edge while preserving stack consumption. For a pure dispatcher sequence, it can follow the state from one incoming edge straight to the selected block.
+
+This excerpt from `SsaCleanup.Run` applies decisions already proved by the analysis. It keeps the original instruction object as the first `pop`, so existing branch targets still perform the required stack consumption. Only whitespace has been changed:
+
+```csharp
+foreach (var pair in analysis.Decisions.ToArray())
+{
+    int position = body.Instructions.IndexOf(pair.Key);
+    // Keep the existing label at the first pop so incoming edges execute the same stack consumption.
+    pair.Key.OpCode = OpCodes.Pop; pair.Key.Operand = null;
+    for (int n = 1; n < pair.Value.Pops; n++)
+        body.Instructions.Insert(++position, Instruction.Create(OpCodes.Pop));
+    if (pair.Value.Target != null)
+        body.Instructions.Insert(++position, Instruction.Create(OpCodes.Br, pair.Value.Target));
+    report.ProvenBranches++; changed++;
+}
+```
 
 Each rewrite can expose more dead code, so cleanup shortens branch chains and repeats until nothing changes, capped at 64 passes. An unproven dispatcher stays in the output and appears in the report.
 
@@ -458,7 +633,19 @@ The emitter uses dnlib to load the original assembly, replace the logical method
 
 Some captured bodies still begin with a piece of DNGuard: a generated prologue reads a protector field, computes its hash code and branches on the result. Leaving it there makes the analysis output depend on DNGuard's state, so the emitter skips the recognized prologue and starts at the application logic.
 
-The pattern takes the address of `ZYXDNGuarder.a`, constrains a call to `Object.GetHashCode` to `System.IntPtr`, and tests the result with `brtrue.s`. Its branch target and fall-through path through a `nop` meet at the same application instruction. The importer checks all six instructions and that target before recording the semantic entry, `IL_0014`; the emitter replaces the initial `nop` with an unconditional branch there. The reports call this the guard bypass, and it applies only to a complete match.
+The predicate capture begins with these six instructions, followed by the application entry. The operands below use the recorded runtime resolutions:
+
+```il
+IL_0000: nop
+IL_0001: ldsflda native int ZYXDNGuarder::a
+IL_0006: constrained. System.IntPtr
+IL_000C: callvirt instance int32 System.Object::GetHashCode()
+IL_0011: brtrue.s IL_0014
+IL_0013: nop
+IL_0014: ldarg.1
+```
+
+The pattern takes the address of `ZYXDNGuarder.a`, constrains a call to `Object.GetHashCode` to `System.IntPtr`, and tests the result with `brtrue.s`. Its branch target and fall-through path through the `nop` meet at the same application instruction. The importer checks the six opcodes, the expected declaring types and member names, and that branch target before recording the semantic entry, `IL_0014`. The emitter replaces the initial `nop` with an unconditional branch there; cleanup can then remove the unreachable prologue. The reports call this the guard bypass. It is a deliberate removal of this recognized protector sequence for analysis output, not a general rule for arbitrary method prologues.
 
 For whole-inventory output, I give validated active aliases copies of their recovered originals. Decoys and unreferenced native infrastructure get explicit analysis exception bodies. Before that, the lifter checks reachable references in recovered and pre-existing IL; if anything can still call an entry marked for exclusion, completion fails. Every protected entry remains in the report.
 
@@ -520,9 +707,7 @@ That gets me back to what I wanted at the start: I can open the application in a
 
 ## Implementation references
 
-The implementation is in the `dnguard` directory of `pva-research`, at revision `ba88f0a`. The recovery figures come from its `VERIFICATION.md`.
-
-The predicate's alias mapping, resolved operands and captured instruction sequence are recorded in `e6536f889bfb428cb3e1c37c292b51c3/_docs/dnguard-generic-deobfuscation.md`. The C# example above is a readable rendering of that recorded IL.
+The implementation is in the `dnguard` directory of `pva-research`, at revision `ba88f0a`.
 
 | Source | Responsibility |
 | --- | --- |
