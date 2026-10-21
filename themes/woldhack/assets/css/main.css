@@ -870,7 +870,7 @@ body.image-viewer-open {
   max-height: calc(100dvh - 10rem);
   width: auto;
   height: auto;
-  margin: 0;
+  margin: 0 auto;
   object-fit: contain;
   cursor: zoom-in;
   -webkit-user-select: none;
@@ -885,6 +885,7 @@ body.image-viewer-open {
 
 .image-viewer-diagram {
   width: fit-content;
+  margin-inline: auto;
 }
 
 .image-viewer-diagram svg {

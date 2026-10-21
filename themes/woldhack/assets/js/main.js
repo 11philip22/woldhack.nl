@@ -477,7 +477,7 @@
     function setZoom(value) {
       var next = Math.max(100, Math.min(800, Math.round(value * 100))) / 100;
       var ratio = next / zoom;
-      var centerX = stage.scrollLeft + stage.clientWidth / 2;
+      var centerX = stage.scrollLeft + Math.min(stage.clientWidth, preview.getBoundingClientRect().width) / 2;
       var centerY = stage.scrollTop + stage.clientHeight / 2;
       zoom = next;
       stage.classList.toggle("is-zoomed", zoom > 1);
@@ -496,6 +496,7 @@
         return;
       }
       var currentZoom = zoom;
+      dialog.style.width = "";
       stage.classList.remove("is-zoomed");
       stage.style.width = stage.style.height = preview.style.width = "";
       if (preview === activeDiagram) {
@@ -515,6 +516,8 @@
       fitWidth = bounds.width;
       stage.style.width = Math.ceil(bounds.width) + "px";
       stage.style.height = Math.ceil(bounds.height) + "px";
+      dialog.style.width = dialog.getBoundingClientRect().width + "px";
+      stage.style.width = "100%";
       zoom = 1;
       setZoom(currentZoom);
     }
