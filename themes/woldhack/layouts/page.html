@@ -17,7 +17,13 @@
     {{ if .Store.Get "hasMermaid" }}
       <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict', fontFamily: getComputedStyle(document.body).fontFamily, flowchart: { htmlLabels: false } });
+        mermaid.initialize({
+          startOnLoad: true,
+          theme: 'neutral',
+          securityLevel: 'strict',
+          fontFamily: getComputedStyle(document.body).fontFamily,
+          flowchart: { htmlLabels: false, useMaxWidth: false, diagramPadding: 8, nodeSpacing: 30, rankSpacing: 35 }
+        });
       </script>
     {{ end }}
 

@@ -433,18 +433,20 @@
     });
   }
 
-  function initImageViewer() {
+  function initMediaViewer() {
     var images = document.querySelectorAll(".article-content img");
+    var diagrams = document.querySelectorAll(".article-content .mermaid");
     var dialog = document.createElement("dialog");
-    if (!images.length || typeof dialog.showModal !== "function") {
+    if ((!images.length && !diagrams.length) || typeof dialog.showModal !== "function") {
       return;
     }
 
     dialog.className = "image-viewer";
-    dialog.setAttribute("aria-label", "Image preview");
-    dialog.innerHTML = '<form method="dialog" class="image-viewer-controls"><output aria-live="polite">100%</output><button type="button" class="theme-toggle" data-zoom="out" aria-label="Zoom out">−</button><button type="button" class="theme-toggle" data-zoom="in" aria-label="Zoom in">+</button><button type="button" class="theme-toggle" data-zoom="fit" aria-label="Fit image to screen">Fit</button><button class="theme-toggle" aria-label="Close image preview" autofocus>Close</button></form><figure><div class="image-viewer-stage" tabindex="0" role="region" aria-label="Image area, scroll to pan when zoomed"><img alt="" decoding="async" draggable="false"></div><figcaption hidden></figcaption></figure>';
+    dialog.setAttribute("aria-label", "Media preview");
+    dialog.innerHTML = '<form method="dialog" class="image-viewer-controls"><output aria-live="polite">100%</output><button type="button" class="theme-toggle" data-zoom="out" aria-label="Zoom out">−</button><button type="button" class="theme-toggle" data-zoom="in" aria-label="Zoom in">+</button><button type="button" class="theme-toggle" data-zoom="fit" aria-label="Fit preview to screen">Fit</button><button class="theme-toggle" aria-label="Close preview" autofocus>Close</button></form><figure><div class="image-viewer-stage" tabindex="0" role="region" aria-label="Preview area, scroll to pan when zoomed"><img alt="" decoding="async" draggable="false"><div class="image-viewer-diagram" hidden></div></div><figcaption hidden></figcaption></figure>';
     document.body.appendChild(dialog);
-    var preview = dialog.querySelector("img");
+    var imagePreview = dialog.querySelector("img");
+    var diagramPreview = dialog.querySelector(".image-viewer-diagram");
     var caption = dialog.querySelector("figcaption");
     var stage = dialog.querySelector(".image-viewer-stage");
     var zoomIn = dialog.querySelector('[data-zoom="in"]');
@@ -453,7 +455,24 @@
     var zoomLabel = dialog.querySelector("output");
     var zoom = 1;
     var fitWidth = 0;
+    var preview = imagePreview;
     var trigger;
+    var activeDiagram;
+    var diagramMarker;
+
+    function resetPreview(nextPreview) {
+      if (preview) {
+        preview.style.width = "";
+      }
+      preview = nextPreview;
+      fitWidth = 0;
+      zoom = 1;
+      stage.classList.remove("is-zoomed");
+      stage.style.width = stage.style.height = "";
+      stage.scrollLeft = stage.scrollTop = 0;
+      zoomLabel.value = "100%";
+      zoomIn.disabled = zoomOut.disabled = zoomFit.disabled = true;
+    }
 
     function setZoom(value) {
       var next = Math.max(100, Math.min(800, Math.round(value * 100))) / 100;
@@ -472,14 +491,27 @@
       zoomOut.disabled = zoomFit.disabled = zoom === 1;
     }
 
-    function fitImage() {
-      if (!dialog.open || !preview.naturalWidth) {
+    function fitPreview() {
+      if (!dialog.open || !preview || (preview === imagePreview && !preview.naturalWidth)) {
         return;
       }
       var currentZoom = zoom;
       stage.classList.remove("is-zoomed");
       stage.style.width = stage.style.height = preview.style.width = "";
+      if (preview === activeDiagram) {
+        var viewBox = preview.viewBox && preview.viewBox.baseVal;
+        if (!viewBox || !viewBox.width || !viewBox.height) {
+          return;
+        }
+        var availableWidth = Math.max(1, window.innerWidth - 64);
+        var availableHeight = Math.max(1, window.innerHeight - 160);
+        var scale = Math.min(1, availableWidth / viewBox.width, availableHeight / viewBox.height);
+        preview.style.width = Math.max(1, Math.floor(viewBox.width * scale)) + "px";
+      }
       var bounds = preview.getBoundingClientRect();
+      if (!bounds.width || !bounds.height) {
+        return;
+      }
       fitWidth = bounds.width;
       stage.style.width = Math.ceil(bounds.width) + "px";
       stage.style.height = Math.ceil(bounds.height) + "px";
@@ -490,9 +522,9 @@
     zoomIn.addEventListener("click", function () { setZoom(zoom + 0.4); });
     zoomOut.addEventListener("click", function () { setZoom(zoom - 0.4); });
     zoomFit.addEventListener("click", function () { setZoom(1); });
-    preview.addEventListener("click", function () { setZoom(zoom === 1 ? 2 : 1); });
-    preview.addEventListener("load", fitImage);
-    window.addEventListener("resize", fitImage);
+    imagePreview.addEventListener("click", function () { setZoom(zoom === 1 ? 2 : 1); });
+    imagePreview.addEventListener("load", fitPreview);
+    window.addEventListener("resize", fitPreview);
 
     images.forEach(function (image) {
       var link = image.closest("a");
@@ -521,18 +553,62 @@
         }
         event.preventDefault();
         trigger = link;
-        setZoom(1);
-        preview.src = link.href;
-        preview.alt = image.alt;
+        imagePreview.hidden = false;
+        diagramPreview.hidden = true;
+        resetPreview(imagePreview);
+        imagePreview.src = link.href;
+        imagePreview.alt = image.alt;
         var figure = image.closest("figure");
         var sourceCaption = figure && figure.querySelector("figcaption");
         caption.textContent = sourceCaption ? sourceCaption.textContent.trim() : "";
         caption.hidden = !caption.textContent;
+        dialog.setAttribute("aria-label", "Image preview");
         dialog.showModal();
         document.body.classList.add("image-viewer-open");
-        if (preview.complete) {
-          fitImage();
+        if (imagePreview.complete) {
+          fitPreview();
         }
+      });
+    });
+
+    function openDiagram(diagram) {
+      var svg = diagram.querySelector("svg");
+      if (!svg) {
+        return;
+      }
+      trigger = diagram;
+      diagramMarker = document.createComment("mermaid diagram");
+      svg.replaceWith(diagramMarker);
+      diagramPreview.appendChild(svg);
+      activeDiagram = svg;
+      imagePreview.hidden = true;
+      diagramPreview.hidden = false;
+      resetPreview(svg);
+      var title = svg.querySelector("title");
+      caption.textContent = title ? title.textContent.trim() : "";
+      caption.hidden = !caption.textContent;
+      dialog.setAttribute("aria-label", "Diagram preview");
+      dialog.showModal();
+      document.body.classList.add("image-viewer-open");
+      fitPreview();
+    }
+
+    diagrams.forEach(function (diagram) {
+      diagram.classList.add("mermaid-viewer-trigger");
+      diagram.setAttribute("role", "button");
+      diagram.setAttribute("aria-haspopup", "dialog");
+      diagram.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+        openDiagram(diagram);
+      });
+      diagram.addEventListener("keydown", function (event) {
+        if (event.defaultPrevented || (event.key !== "Enter" && event.key !== " ")) {
+          return;
+        }
+        event.preventDefault();
+        openDiagram(diagram);
       });
     });
 
@@ -546,6 +622,11 @@
       }
     });
     dialog.addEventListener("close", function () {
+      if (activeDiagram && diagramMarker) {
+        activeDiagram.style.width = "";
+        diagramMarker.replaceWith(activeDiagram);
+        activeDiagram = diagramMarker = null;
+      }
       document.body.classList.remove("image-viewer-open");
       if (trigger) {
         trigger.focus({ preventScroll: true });
@@ -558,7 +639,7 @@
     initVoidPanels();
     initEntryCardScans();
     initClickableCards();
-    initImageViewer();
+    initMediaViewer();
   }
 
   if (document.readyState === "loading") {

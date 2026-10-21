@@ -566,8 +566,9 @@ html.is-light .content-card .card-scan-bg {
 }
 
 .article-content pre.mermaid {
-  margin: 24px 0;
-  padding: 20px;
+  width: fit-content;
+  margin: 24px auto;
+  padding: 12px;
   border: 1px solid var(--code-border);
   font-family: inherit;
 }
@@ -575,36 +576,37 @@ html.is-light .content-card .card-scan-bg {
 .article-content .mermaid svg {
   display: block;
   margin: 0 auto;
-  max-height: 800px;
+  max-width: 100%;
+  max-height: min(60vh, 36rem);
   height: auto;
 }
 
 /* Override Mermaid's embedded colors so the existing theme toggle updates the SVG. */
-.article-content .mermaid .node :is(rect, circle, ellipse, polygon, path) {
+:is(.article-content .mermaid, .image-viewer-diagram) .node :is(rect, circle, ellipse, polygon, path) {
   fill: var(--input-bg) !important;
   stroke: var(--accent) !important;
 }
 
-.article-content .mermaid :is(text, .nodeLabel, .edgeLabel) {
+:is(.article-content .mermaid, .image-viewer-diagram) :is(text, .nodeLabel, .edgeLabel) {
   fill: var(--text) !important;
   color: var(--text) !important;
 }
 
-.article-content .mermaid .flowchart-link {
+:is(.article-content .mermaid, .image-viewer-diagram) .flowchart-link {
   stroke: var(--muted) !important;
 }
 
-.article-content .mermaid .marker {
+:is(.article-content .mermaid, .image-viewer-diagram) .marker {
   fill: var(--muted) !important;
   stroke: var(--muted) !important;
 }
 
-.article-content .mermaid :is(.edgeLabel, .edgeLabel rect, .labelBkg) {
+:is(.article-content .mermaid, .image-viewer-diagram) :is(.edgeLabel, .edgeLabel rect, .labelBkg) {
   background-color: var(--code-bg) !important;
   fill: var(--code-bg) !important;
 }
 
-.article-content .mermaid .cluster rect {
+:is(.article-content .mermaid, .image-viewer-diagram) .cluster rect {
   fill: var(--panel-bg) !important;
   stroke: var(--input-border) !important;
 }
@@ -758,6 +760,15 @@ html.is-light .content-card .card-scan-bg {
   outline-offset: 4px;
 }
 
+.mermaid-viewer-trigger[data-processed="true"] {
+  cursor: zoom-in;
+}
+
+.mermaid-viewer-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 body.image-viewer-open {
   overflow: hidden;
 }
@@ -872,6 +883,21 @@ body.image-viewer-open {
   max-width: none;
   max-height: none;
   cursor: zoom-out;
+}
+
+.image-viewer-diagram {
+  width: fit-content;
+}
+
+.image-viewer-diagram svg {
+  display: block;
+  width: auto;
+  max-width: none !important;
+  max-height: none;
+  height: auto;
+  margin: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .image-viewer figcaption {
