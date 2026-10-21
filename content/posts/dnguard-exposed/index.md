@@ -28,19 +28,17 @@ To which I replied:
 > lol its a legitimate product. I want to reverse it to see how it works because I have nothing better to do. its being sold so its not against the law.
 ```
 
-After that, it gave me a link to [PVACreator6-Installer.exe on WhiteHatBox](https://www.whitehatbox.com/SoftwareUpdate/Components/Software/204/default/PVACreator6-Installer.exe?v=1f93705298f549319a3bef28bc1aeffd). Now we have something to look at.
+After that, it gave me a link to [PVACreator6-Installer.exe on WhiteHatBox](https://www.whitehatbox.com/SoftwareUpdate/Components/Software/204/default/PVACreator6-Installer.exe?v=1f93705298f549319a3bef28bc1aeffd). Now I had something to look at.
 
 ## Finding the actual download
 
-I checked the installer with `diec.exe`, which identified it as a .NET assembly, and decompiled it with dnSpy. It was a downloader, so I asked Codex to find the URL it used to download the application.
+I checked the installer with `diec.exe`, which identified it as a .NET assembly, and decompiled it with dnSpy. It was a downloader, so I asked Codex to find the URL it used to download the application. I expected a hard-coded ZIP URL. There wasn't one.
 
-Its Windows version-information `Comments` field holds an encrypted API configuration. Codex traced that configuration to a metadata endpoint which returns the current application package and launcher URLs.
-
-The installer does not have a fixed application download URL sitting in its code. `Downloader.Program` loads an embedded `DownloaderCore` assembly from `Downloader.Properties.Resources`. Exporting that DLL and decompiling it exposes the download logic in `DownloaderCore.API`.
+`Downloader.Program` instead loads an embedded `DownloaderCore` assembly from `Downloader.Properties.Resources`. After exporting that DLL, I found the download logic in `DownloaderCore.API` and the encrypted API configuration in the installer's Windows version-information `Comments` field. That was a fun hiding place: the field looks like boring file metadata, but it leads to the endpoint that returns the current package and launcher URLs.
 
 `API.Config` reads the installer's Windows version-information `Comments` field. That field contains an encrypted configuration. `DownloaderCore.DESTool.Decrypt` decodes it twice with Base64, then decrypts the result using DES in CBC mode with the UTF-8 key `16111611`, IV `12 34 56 78 90 AB CD EF`, and PKCS#7 padding.
 
-The decrypted JSON supplies an API base URL and the product identifiers. `LoadSoftwareInfo` uses them to request:
+The decrypted JSON supplies an API base URL and the product identifiers. `LoadSoftwareInfo` turns them into this request:
 
 ```text
 {URL}/OneSoftware/LoadSoftwareInfo?sid={SID}&wid={WID}&aid={AID}&fsid={RSID}
@@ -48,7 +46,7 @@ The decrypted JSON supplies an API base URL and the product identifiers. `LoadSo
 
 The response contains another `URL` field for the application package, plus `StarterUrl` for the launcher. These are the addresses used by `DownloadProgram` and `DownloadStarter`.
 
-For this installer, we can extract the configuration directly from the `Comments` field. 
+For this installer, I extracted the configuration directly from the `Comments` field:
 
 ```python
 import base64
@@ -92,7 +90,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Metadata extraction failed' }
 $metadataUrl
 ```
 
-This reads the installer as a file. For the copy examined here, it prints `https://api.whbapi.com/OneSoftware/LoadSoftwareInfo?sid=204&wid=0&aid=0&fsid=0`.
+For my copy of the installer, this prints `https://api.whbapi.com/OneSoftware/LoadSoftwareInfo?sid=204&wid=0&aid=0&fsid=0`.
 
 The metadata request returns the product name and the two download URLs:
 
@@ -113,15 +111,15 @@ On 8 October 2026, the metadata response named the product **PVACreator** and su
 | Application package | [e6536f889bfb428cb3e1c37c292b51c3.zip](http://api.whbapi.com/SoftwareUpdate/NewSoftwares/e6536f889bfb428cb3e1c37c292b51c3.zip?v=3d2d547e9fecbfe45f1db0f163195e0d) |
 | Separate launcher | [PVACreator.exe](http://api.whbapi.com/SoftwareUpdate/Components/Software/204/default/PVACreator.exe?v=268207df8f5fa2071816108464ef7bd7) |
 
-The installer downloads the separate launcher only if the package does not already contain the configured launcher EXE at its root. The metadata also supplies MD5 values used to check the downloaded files. These addresses can change: the metadata request uses HTTPS, while the package and launcher URLs in this response use HTTP.
+The installer downloads the separate launcher only if the package does not already contain the configured launcher EXE at its root. The metadata also supplies MD5 values used to check the downloaded files. One detail surprised me: the metadata request uses HTTPS, but the package and launcher URLs it returned use HTTP.
 
-That got us the actual application binaries. I then tried to decompile the program and found that DNGuard was protecting its methods.
+With the application binaries in hand, I opened them in a decompiler and ran into DNGuard.
 
 ## Finding DNGuard
 
 [DNGuard HVM](https://www.dnguard.net/products.php) is a commercial protection tool for .NET applications and libraries. It takes an existing assembly and produces a protected version intended to make reverse engineering harder. Its features include string encryption, resource protection and optional renaming of classes and methods.
 
-The vendor also claims protection against dumping assemblies from memory and capturing method bodies while .NET compiles them into native machine code. I overcame that second protection in the build examined here by recording the method bodies handed to the compiler and the runtime information needed to reconstruct them.
+The vendor also claims protection against dumping assemblies from memory and capturing method bodies while .NET compiles them into native machine code. In this build, I got around the second protection by recording the method bodies handed to the compiler and the runtime information needed to reconstruct them.
 
 Open the protected PVACreator assembly in a .NET decompiler and a lot of methods end up looking like this:
 
@@ -129,9 +127,7 @@ Open the protected PVACreator assembly in a .NET decompiler and a lot of methods
 throw new Exception("Error, DNGuard Runtime library not loaded!");
 ```
 
-One of those methods is a small predicate used by `RegisterController.CreateCampaignAsync`. I will follow that example through the recovery below.
-
-My goal was to rebuild the protected methods into an assembly that dnSpy could read. I built a lifter to do that.
+One of those methods is a small predicate used by `RegisterController.CreateCampaignAsync`. I will follow it through the recovery below. My goal was simple: rebuild the protected methods into an assembly that dnSpy could read.
 
 ## Reversing DNGuard
 
@@ -143,27 +139,25 @@ After that, my involvement was mostly checking in every few hours. When it ran i
 
 At some point it asked me to run things in a debugger. I gave it access to x64dbg through [x64dbgmcp](https://github.com/wasdubya/x64dbgmcp), so it could do that itself too. It could now use Ghidra to understand the code and a debugger to inspect what happened while it ran.
 
-Eventually it produced a working, but incredibly crude, lifter in Python. I later told it to rebuild that in C++ and C#. That rewrite is the implementation described in the rest of this post.
+Eventually it produced a working, but incredibly crude, lifter in Python. I later told it to rebuild that in C++ and C#. The rewrite is what I describe below.
 
 ## How DNGuard works
 
-Before getting into the lifter, we need to understand what DNGuard is doing to the application. This is the protection path we observed in PVACreator with its bundled `HVMRun64.dll`; other builds and protection settings can behave differently.
+Here is the protection path I observed in PVACreator with its bundled `HVMRun64.dll`.
 
 A normal .NET assembly contains Common Intermediate Language, or CIL, usually shortened to IL. It also contains metadata describing its classes, methods, fields and references. The Common Language Runtime, or CLR, uses a just-in-time compiler, the JIT, to turn a method's IL into native machine code. Microsoft's [managed execution overview](https://learn.microsoft.com/en-us/dotnet/standard/managed-execution-process) describes this process.
 
-That is also why .NET code is convenient to decompile. The file contains both the instructions and information about the objects they operate on. A decompiler can use those together to produce readable C#.
+That combination is why .NET code is so pleasant to decompile: a decompiler can turn the instructions and their object metadata back into readable C#.
 
 ### What is left in the file
 
-In the protected assembly, many method bodies contain the exception shown earlier. There is still metadata describing those methods, so a decompiler can show their names and parameters, but reading the body gives it the error stub. The application clearly does more than throw exceptions. The code needed to implement those methods is stored in a protected form that DNGuard's native runtime understands.
+In the protected assembly, many method bodies contain the exception shown earlier. The metadata still gives me names and parameters, but the body is only the error stub. The application clearly does more than throw exceptions; DNGuard's native runtime keeps the useful part in a protected form.
 
-DNGuard also adds generated methods around the application methods. These include aliases used by its dispatcher and inactive decoys. A method in the metadata is therefore not necessarily a separate piece of application logic. I will get to distinguishing those cases below.
+DNGuard also adds generated methods around the application methods, including aliases used by its dispatcher and inactive decoys. A method in the metadata is therefore not necessarily a separate piece of application logic.
 
 ### What happens when the application runs
 
-`HVMRun64.dll` intercepts the JIT compilation entry point. When the CLR requests compilation of a protected method, DNGuard's dispatcher handles the request and supplies a replacement IL body to the original JIT. The JIT compiles that body into native machine code.
-
-There is another part to this. While compiling IL, the JIT calls back into the runtime to resolve references and obtain information such as local variable types and exception handlers. DNGuard can supply its own callback interface for these requests. For example, an operand in a `call` instruction can be resolved through DNGuard's runtime context instead of being a useful reference in the assembly's metadata.
+`HVMRun64.dll` intercepts the JIT compilation entry point. When the CLR requests a protected method, DNGuard's dispatcher supplies replacement IL to the original JIT. While compiling that IL, the JIT calls back into the runtime for references, local-variable types and exception handlers. DNGuard can answer through its own callback interface, so a `call` operand that is meaningless in the file becomes meaningful only inside that runtime context.
 
 ```mermaid
 flowchart TD
@@ -179,13 +173,13 @@ flowchart TD
     JIT --> Native["Native machine code"]
 ```
 
-This means dumping the loaded assembly can still leave us with the error stubs. Even copying the replacement IL is insufficient when its operands need DNGuard's runtime context to make sense. The compiler receives both the instructions and the answers needed to interpret them. A decompiler needs that information restored in the output assembly too.
+My first obvious idea was to dump the loaded assembly. It still contained the error stubs. Copying the replacement IL was not enough either: synthetic operands only made sense with DNGuard answering the JIT's questions. I needed to save both the instructions and those answers.
+
+Everything below is tied to the exact PVACreator inputs and runtime profile I tested. I treat unknown hashes, layouts, ambiguous captures and missing evidence as failures; I am not claiming the same path works unchanged for every DNGuard build, or that the reconstructed application is a production-ready replacement for the original.
 
 ## How the lifter works
 
-Our way in is the handoff to the original JIT shown above. We observe it after DNGuard has prepared its inputs, copy the supplied IL, and record the runtime's answers as the compiler works through it. Those two pieces let us rebuild an assembly for static analysis in a normal .NET decompiler.
-
-The same runtime path now has two observation points:
+My way in is the handoff to the original JIT. I observe it after DNGuard has prepared its inputs, copy the supplied IL and record the answers the runtime gives while the compiler works through it:
 
 ```mermaid
 flowchart TD
@@ -203,44 +197,29 @@ flowchart TD
     Proxy -.->|"Record the answers"| Capture
 ```
 
-Asking the JIT to compile a method gives us its supplied IL body, including branches that a particular application input might never take. We can therefore capture the body without tracing a particular execution through the application method. The JIT can still ignore unreachable junk, so we cannot assume that every operand in those bytes will receive a callback.
+Asking the JIT to compile a method gives me its supplied IL body, including branches that one application input might never take. I do not have to trace a particular execution through the method. The JIT can still ignore unreachable junk, so not every operand in those bytes necessarily receives a callback.
 
-The implementation in `pva-research/dnguard` uses the bundled `HVMRun64.dll` and the validated Windows x64 Framework CLR/JIT version `4.8.9310.0`. It works with the CIL exposed at this boundary, without reconstructing the method from native machine code or implementing every instruction in DNGuard's native virtual machine. Other DNGuard builds can use different layouts or protection paths; a path that never exposes a suitable CIL body would need separate work.
+The implementation in `pva-research/dnguard` uses the bundled `HVMRun64.dll` and Windows x64 Framework CLR/JIT version `4.8.9310.0`. It works with the CIL exposed at this boundary, so I did not have to reconstruct methods from native machine code or implement every instruction in DNGuard's native virtual machine.
 
-The recovered package covers `PVACreator.exe` and three protected companion libraries: `FingerPrintUI.dll`, `BotModule.dll` and `AccountProfileHelper.dll`. The same stages apply to each, although some runtime paths differ. I will point out those differences where they matter.
+I used the same stages for `PVACreator.exe` and three protected companion libraries: `FingerPrintUI.dll`, `BotModule.dll` and `AccountProfileHelper.dll`.
 
-To turn those observations into an assembly, the lifter splits the work between coordinating captures, running the protected assembly and recording what the native compiler does. Those jobs belong to `DnGuard.Cli`, `DnGuard.Worker` and `DnGuard.Probe`. Once we have the recordings, the managed `DnGuard.Core` library rebuilds the methods. The stages fit together like this:
+The lifter splits the job between coordinating captures, running the protected assembly and recording what the native compiler does. Those jobs belong to `DnGuard.Cli`, `DnGuard.Worker` and `DnGuard.Probe`; the managed `DnGuard.Core` library rebuilds the recorded methods.
 
-```mermaid
-flowchart TD
-    accTitle: From protected assembly to analysis assembly
-    accDescr: Inventory selects methods. A Framework worker and native probe capture them. The importer binds the captured IL, generic reconstruction restores type parameters where needed, and the emitter cleans and verifies the resulting assembly.
-    Input["Protected assembly"] --> Inventory["Inventory<br/>Identify protected methods"]
-    Inventory --> Worker["Framework worker<br/>Request method compilation"]
-    Worker --> Probe["Native probe<br/>IL and callback observations"]
-    Probe --> Evidence["snapshot.bin + capture.json"]
-    Evidence --> Lift["Lift<br/>Decode IL and bind references"]
-    Lift --> Generic["Reconstruct generic parameters<br/>Where paired captures are needed"]
-    Generic --> Emit["Emit with dnlib<br/>Restore bodies and clean control flow"]
-    Emit --> Verify["Reload and compare"]
-    Verify --> Output["Analysis assembly + reports"]
-```
+I can run the stages separately as `inventory`, `capture`, `lift`, `emit` and `verify`, or use `devirtualize` to run capture, lifting and emission together. I kept the recordings between stages, which saved a lot of time: bugs in reconstruction no longer meant asking DNGuard to compile thousands of methods again.
 
-We can run these stages separately through the CLI as `inventory`, `capture`, `lift`, `emit` and `verify`. The `devirtualize` command runs capture, lifting and emission together; emission includes the reload checks. Keeping the recordings between stages is useful when fixing the lifter: we can improve the reconstruction without asking DNGuard to compile everything again.
+## Finding the method I actually want
 
-## Finding the method we actually want
+The error stub gave me a cheap way to build the first inventory: look for `ldstr`, `newobj`, `throw`. That finds candidate entries in the input; watching the native runtime tells me what they actually represent.
 
-First we need a list of methods to recover. The error stub gives us a starting point: look for `ldstr`, `newobj`, `throw`. These instructions load the error message, create an exception and throw it. That finds candidate entries in the input. Watching the native runtime then tells us what each entry actually represents.
-
-Each method has a metadata token. The `CreateCampaignAsync` predicate mentioned earlier has token `0x06001DC8`. The `0x06` identifies the MethodDef table, and the remaining part identifies a row. That number only makes sense within its module. We therefore record the input's SHA256 hash and its Module Version ID, or MVID, alongside the token. Generic type and method arguments are part of the capture identity too.
+Each method has a metadata token. The `CreateCampaignAsync` predicate has token `0x06001DC8`: `0x06` identifies the MethodDef table and the rest identifies a row. Because that number only makes sense within its module, I record the input's SHA256 hash and Module Version ID, or MVID, alongside it. Generic type and method arguments are part of the capture identity too.
 
 ### Originals, aliases and decoys
 
-Finding a stub does not tell us which method to ask DNGuard to compile. It adds generated methods around the application methods: active aliases used by its dispatcher, and inactive decoys. Several can have the same declaring type and signature. If we match only by name or parameter list, we can pick the wrong one.
+My first pass matched methods by declaring type and signature. That looked reasonable and was wrong: DNGuard adds active aliases and inactive decoys, and several entries can have the same type, name and parameters.
 
-For the predicate, the active alias is `0x06001E42`. That is the entry to capture; the recovered body belongs in the original method, `0x06001DC8`. We need to establish that relationship before treating the capture as the original method's code.
+For the predicate, the active alias is `0x06001E42`. I have to ask DNGuard to compile that entry, then put the recovered body in the original method, `0x06001DC8`.
 
-The native dispatcher gives us a way to tell them apart. It exposes a table with a 32-bit payload word for each MethodDef row. In the validated inputs, the high byte identifies categories such as application IL, active aliases and decoys. Other bytes help select the active alias within a family.
+The native dispatcher gave me a way to tell them apart. It exposes a table with a 32-bit payload word for each MethodDef row. In my inputs, the high byte identifies categories such as application IL, active aliases and decoys. Other bytes help select the active alias within a family.
 
 ```mermaid
 flowchart TD
@@ -255,17 +234,17 @@ flowchart TD
     Unique -->|"No"| Unbound["Leave the family unmapped"]
 ```
 
-We start with the easy cases: families containing exactly one original and one active alias. `Inventory.DeriveMap` uses those pairs to fit an xor/add/xor transformation to the low byte. That gives us a way to predict other pairings, but we only accept a prediction for an unseen byte when every fitting model agrees. A second byte can distinguish remaining candidates where we have observations supporting that choice.
+I started with families containing exactly one original and one active alias. `Inventory.DeriveMap` uses those pairs to fit an xor/add/xor transformation to the low byte. For an unseen byte, I accept a predicted pairing only when every fitting model agrees. A second byte distinguishes a few remaining candidates where the observations support it.
 
-When that still leaves an ambiguous family, we can supply an explicit clone map. Its sidecar binds the map to the input hash and MVID, and we check the tokens, declaring types, signatures and one-to-one mappings before using it. Two ambiguous families in the companion library `BotModule.dll` use these explicit validated mappings. Either way, we keep both identities: the entry we ask to compile and the logical method that should receive the recovered body.
+Two families in `BotModule.dll` stayed ambiguous. I mapped those explicitly, with a sidecar bound to the input hash and MVID; the lifter checks the tokens, declaring types, signatures and one-to-one mappings before using it. In both the derived and explicit cases, I keep the entry to compile separate from the logical method that receives the body.
 
 ## Getting the runtime ready
 
-The target has to run under the CLR version its protection expects. Native capture therefore happens in a separate Windows x64 worker using .NET Framework. The CLI and offline reconstruction use .NET 9, keeping coordination outside the target process.
+Native capture happens in a separate Windows x64 worker under the .NET Framework CLR expected by the target. I keep the CLI and offline reconstruction on .NET 9, outside that process.
 
-The hooks depend on specific function locations, instruction prefixes, callback table slots and structure layouts. Those go into a compatibility profile, along with hashes of `HVMRun64.dll`, `clr.dll` and `clrjit.dll`. The worker checks the hashes before loading the target. A DLL with the right name and a different layout would leave the probe reading the wrong memory.
+The hooks depend on exact function locations, instruction prefixes, callback-table slots and structure layouts. I put those in a compatibility profile with hashes of `HVMRun64.dll`, `clr.dll` and `clrjit.dll`; the worker checks them before loading the target. A familiar filename is no protection against reading the wrong memory from a different build.
 
-We also have to install the hooks in the right order. DNGuard examines the original compiler prologue when selecting its runtime interface, so changing that prologue too early interferes with its setup. We let DNGuard finish that part first:
+Hook order caused one of the less obvious failures. When I changed the compiler prologue too early, DNGuard inspected my patched bytes instead of the original and its setup went down the wrong path. The working order is:
 
 1. Warm up Framework compilation and obtain the original compiler through `getJit`.
 2. Save and validate its address and instruction prefix.
@@ -273,25 +252,25 @@ We also have to install the hooks in the right order. DNGuard examines the origi
 4. Wait until HVM replaces the compiler table entry.
 5. Use MinHook to detour the saved original compiler, then load the target assembly.
 
-That leaves HVM's installation intact and puts the observer where HVM eventually calls the original compiler.
+This leaves HVM's installation intact and puts my observer where HVM eventually calls the original compiler.
 
-To get a method compiled, the worker resolves it and calls `RuntimeHelpers.PrepareMethod`. This lets us request its body without having to work out arguments and invoke every application method. The worker runs the target's module initializer inside the first capture request, because initialization can itself trigger compilation worth capturing. That initializer does execute target code. String getters also need an actual invocation; I will get to those below.
+The worker resolves a method and calls `RuntimeHelpers.PrepareMethod`, so I do not need to invent arguments and invoke every application method. It runs the target's module initializer inside the first capture request because initialization can trigger useful compilations of its own. That initializer does execute target code; string getters are the other case that needs a real invocation.
 
 ### Proving ownership
 
-One request can cause nested or background compilations. The next compiler call is not necessarily our method.
+I initially assumed the next compiler call after a request would be my method. Module initialization, nested compilation and background work quickly disproved that.
 
-To keep those compilations apart, the probe records request, compilation, parent and thread identifiers, plus the dispatcher handle, compiler handle and method-info pointer. We only accept a different compiler handle through a dispatcher relationship when the observation belongs to the same method-info record. Shared generic code needs an additional CLR family check. If two different application bodies still match, we fail the capture because we cannot tell which one belongs to our request.
+The probe now records request, compilation, parent and thread identifiers, plus the dispatcher handle, compiler handle and method-info pointer. I accept a different compiler handle through a dispatcher relationship only when the observation belongs to the same method-info record. Shared generic code gets an additional CLR-family check. If two application bodies still match, I leave the capture failed rather than guess.
 
-Some BotModule aliases supply the original CLR callback table instead of HVM's proxy. The probe supports that observed route too, validating the table and callback addresses against the pinned `clr.dll`. If CLR also compiles the unchanged metadata error stub, the worker can exclude that exact stub only after observing a distinct HVM body. It retains the excluded snapshot as evidence.
+Some `BotModule` aliases surprised me by supplying the original CLR callback table instead of HVM's proxy. The probe supports that route too, checking the table and callback addresses against the pinned `clr.dll`. CLR sometimes also compiles the unchanged metadata error stub; the worker excludes that exact stub only after seeing a distinct HVM body, and keeps the excluded snapshot as evidence.
 
 ## Recording the compiler's questions
 
-Once the right compilation is identified, recording can begin. At compiler entry, `CORINFO_METHOD_INFO` gives us the IL pointer and size, method handle, module scope, maximum stack, exception-handler count, options and signature information. The probe copies the IL immediately into a bounded native buffer.
+At compiler entry, `CORINFO_METHOD_INFO` gives me the IL pointer and size, method handle, module scope, maximum stack, exception-handler count, options and signature information. The probe copies the IL immediately into a bounded native buffer.
 
 The callback results fill in the rest:
 
-| Callback | Information we need |
+| Callback | Information I record |
 | --- | --- |
 | `resolveToken` | The runtime type, method or field behind an operand |
 | `getCallInfo` | The final resolution of a call |
@@ -301,9 +280,9 @@ The callback results fill in the rest:
 
 ### Watching callbacks without wrapping them
 
-Watching these calls takes some care. This HVM build derives signature context from the caller's state, including its return address. If we put a wrapper around a callback, we change the call path and can change the answer. The observer has to preserve the original call and its stack.
+My first instinct was to wrap the callbacks. That changed the call path and, with it, some answers: this HVM build derives signature context from the caller's state, including its return address. The observer has to preserve the original call and stack.
 
-The probe does that by giving each admitted compilation a private copy of the callback table, also called a vtable: a table of addresses for the functions the JIT can call. It keeps the function pointers as they are, temporarily points the compiler's runtime interface at that copy, and marks its memory page with `PAGE_GUARD`. Reading the table then raises a native exception that tells us which slot the JIT is using.
+The probe gives each admitted compilation a private copy of the callback table, or vtable. It leaves the function pointers alone, temporarily points the compiler's runtime interface at the copy and marks its memory page with `PAGE_GUARD`. Reading the table raises a native exception that tells me which slot the JIT is using.
 
 ```mermaid
 flowchart TD
@@ -318,29 +297,29 @@ flowchart TD
     Rearm --> Lookup
 ```
 
-Catching the table lookup gets us close, but the argument registers may not be ready yet. The probe uses MinHook's HDE64 instruction decoder to find the actual indirect call and place an execution breakpoint there. For the pinned CLR, it also checks that the callback target in `RAX` is the expected function before recording anything. A second breakpoint at the return address captures the results.
+Catching the table lookup gets me close, but at that point the argument registers may not be ready. The probe uses MinHook's HDE64 instruction decoder to find the actual indirect call and place an execution breakpoint there. For the pinned CLR, it also checks that the callback target in `RAX` is the expected function before recording anything. A second breakpoint at the return address captures the results.
 
-A private table matters because page guards are consumed when triggered. With a shared table, an unrelated thread can consume the guard and make us miss the callback. The private page keeps the observation attached to its compilation. A `finally` path restores the original table, releases the page and marks abandoned observations incomplete.
+Page guards are consumed when triggered. With a shared table, I watched unrelated threads steal the guard and make the target callback disappear. A private page keeps the observation attached to its compilation. A `finally` path restores the original table, releases the page and marks abandoned observations incomplete.
 
-All recording inside these observers stays native. Calling managed code here could trigger more compilation while a capture is in progress. The observers therefore avoid managed reflection and writes to the IPC pipe. Once compilation returns, the worker can turn the captured handles into managed descriptions and send the result to the CLI.
+All recording inside these observers stays native. Calling managed code there can trigger more compilation in the middle of a capture, so the observers avoid managed reflection and IPC writes. After compilation returns, the worker turns the captured handles into managed descriptions and sends the result to the CLI.
 
-A recording is only useful if it is complete. The bundled defaults provide 32 buffers of 16 MiB, with individual IL bodies limited to 1 MiB and signature candidates to 64 KiB. If a required read fails or a buffer overflows, the probe marks the request incomplete.
+The bundled defaults provide 32 buffers of 16 MiB, with individual IL bodies limited to 1 MiB and signature candidates to 64 KiB. A failed required read or overflow marks the request incomplete.
 
 ### Keeping captures reusable
 
-With thousands of methods to recover, we need to be able to stop and resume without losing the captures that worked. Each successful capture has a raw `snapshot.bin` and a `capture.json` manifest. We commit the raw file first and write the complete manifest last, so an interrupted write cannot look like a finished capture.
+With thousands of methods to recover, stopping and resuming mattered almost immediately. Each successful capture has a raw `snapshot.bin` and a `capture.json` manifest. I commit the raw file first and write the complete manifest last, so an interrupted write cannot look finished.
 
-Before reusing one, we check the input, module, method, generic arguments, profile, capture-tool fingerprint and raw snapshot hash. If we change the probe or profile, automatic reuse is invalidated. We can still explicitly import older evidence with its recorded provenance.
+Before reuse, the lifter checks the input, module, method, generic arguments, profile, capture-tool fingerprint and raw snapshot hash. Changing the probe or profile invalidates automatic reuse. I can still import older evidence explicitly with its recorded provenance.
 
-We keep a worker running across successful requests. If a request fails, we retry it once in a fresh worker, with a default timeout of 180 seconds. Shutdown needs care too: first we stop admitting new compiler observations, then wait for already admitted native frames to publish their buffers before draining them. That includes compilations started by initialization on another thread. A timeout discards the worker; the completed captures remain available for our next run.
+I keep a worker alive across successful requests. A failed request gets one retry in a fresh worker, with a default timeout of 180 seconds. On shutdown, the worker stops admitting observations, waits for admitted native frames to publish their buffers and then drains them, including compilations started by initialization on another thread. A timeout discards the worker but leaves completed captures available for the next run.
 
 ## Turning captured bytes into useful IL
 
-We now have the IL bytes, but we still need to make their references usable outside DNGuard. Take a `call` instruction: its operand identifies the method to call. In ordinary IL this is a metadata reference. In our captured body it can be a synthetic token whose meaning comes from DNGuard's callbacks. If we just copy that number into a new assembly, we have not recreated the call.
+Captured IL bytes still are not useful on their own. A `call` operand normally identifies a method through metadata; here it can be a synthetic token whose meaning exists only in DNGuard's callbacks. Copying that number into a new assembly recreates the bytes, not the call.
 
-The predicate gives us a concrete example. Its captured `callvirt` operand `0x06800004` resolves to `ModelInfo.get_Name()`, while field operand `0x04800005` resolves to the closure's `platform` field. Those bindings tell us what the instructions operate on; the synthetic numbers alone do not.
+The predicate makes this concrete. Its captured `callvirt` operand `0x06800004` resolves to `ModelInfo.get_Name()`, while field operand `0x04800005` resolves to the closure's `platform` field. The synthetic numbers alone tell me none of that.
 
-`CaptureImporter` handles this by decoding the instructions, checking operand lengths and making sure branch and switch targets land on instruction boundaries. It then matches each token operand to the runtime resolution recorded for this method's context and module scope.
+`CaptureImporter` decodes the instructions, checks operand lengths and verifies that branch and switch targets land on instruction boundaries. It then matches each token operand to the runtime resolution recorded for that method context and module scope.
 
 ```mermaid
 flowchart TD
@@ -357,29 +336,29 @@ flowchart TD
     Identity --> Import["dnlib imports a valid operand"]
 ```
 
-One awkward detail is that `resolveToken` can return stale handles. HVM finishes resolving some calls during `getCallInfo`. We keep both observations, use the final token record where available, and reject conflicting final results. We also preserve the method named by that token: the effective call target reported elsewhere in `getCallInfo` may be a canonical method used for shared generic code.
+One awkward discovery was that `resolveToken` sometimes returned stale handles; HVM finished resolving those calls during `getCallInfo`. I keep both observations, prefer the final token record and reject conflicting final results. I also preserve the method named by that token because the effective target reported elsewhere in `getCallInfo` may only be a canonical method used for shared generic code.
 
-We also have to separate out questions the JIT asks about methods it considers inlining. Those callbacks give us useful evidence about another method. Filtering by both context and scope keeps those answers from overwriting references in the body we are rebuilding.
+The JIT also asks questions about methods it considers inlining. Those callbacks are useful evidence for another method, but filtering by context and scope keeps them from overwriting references in the body I am rebuilding.
 
-After compilation, `Handles` turns native handles into descriptions containing the defining module, MVID, metadata token, file hash and type structure. That structure is needed to rebuild arrays, pointers, by-reference types and constructed generics. Saving a name alone would lose details such as the element type or generic arguments.
+After compilation, `Handles` turns native handles into descriptions containing the defining module, MVID, metadata token, file hash and type structure. I need the structure to rebuild arrays, pointers, by-reference types and constructed generics; a name alone loses element types and generic arguments.
 
 ### Locals and exception handlers
 
-The next thing we need is the method's local variables. Reading the signature pointer in the method header looks like a convenient way to get them, except that it can lead to decoy data. We keep those candidate bytes as evidence and reconstruct the locals from the callbacks the JIT actually used.
+I first read local variables from the signature pointer in the method header. Some of those bytes were decoys. I now keep them only as evidence and reconstruct locals from the callbacks the JIT actually used.
 
-`getArgType` and `getArgClass` give us each local's type, while `getArgNext` gives us the links between entries. We walk that chain to put the locals in order; the order in which callbacks arrived does not tell us enough. If a local is missing, the chain is broken or types conflict, capture fails. Filling the gaps with `System.Object` would change the method's meaning, so we require exact types.
+`getArgType` and `getArgClass` give me each local's type, while `getArgNext` links the entries. I walk that chain to recover their order because callback arrival order is not enough. A missing local, broken chain or type conflict fails the capture; filling a gap with `System.Object` could change the method's meaning.
 
-What happens when the method throws has to survive reconstruction too. Each exception clause records the protected range, handler range and either a catch type or filter offset. Those offsets become instruction references in the emitted body. Catch and filter entry points also have to count as roots when checking reachability, otherwise cleanup could remove code that is only reached through an exception.
+Exception clauses record the protected range, handler range and either a catch type or filter offset. I turn those offsets into instruction references and count catch and filter entry points as reachability roots, so cleanup does not delete code reached only through an exception.
 
 ### Indirect calls
 
-A `calli` instruction gives us another case to handle. It calls a function pointer, so we need a standalone calling signature as well as the address. We get that by observing `findSig`, recording the returned signature and following its arguments through the same type callbacks.
+A `calli` instruction calls a function pointer, so I need a standalone calling signature as well as the address. I get it by observing `findSig`, recording the returned signature and following its arguments through the same type callbacks.
 
-Before emitting the call, we check the signature's calling convention, return type and argument count against the native header, then check its parameters against the observed traversal. This is how we recover the real signature used by the protected module initializer. Using the decoy signature from the file would give us the wrong call.
+Before emission, I compare the calling convention, return type and argument count with the native header, then compare the parameters with the observed traversal. That recovers the real signature used by the protected module initializer; the signature left in the file is another decoy.
 
 ## Restoring generic methods
 
-Take a generic method such as `Box<T>.Echo(T value)`. If we capture it with `T = int`, an `int` local could have come from `T`, or it could have been a fixed integer counter. One capture cannot tell us which. A second capture with `T = long` lets us compare: the local representing `T` changes with the argument, while the counter stays an `int`.
+A single capture of `Box<T>.Echo(T value)` with `T = int` fooled my first reconstruction: an `int` local might represent `T`, or it might be a fixed counter. A second capture with `T = long` exposes the difference. The local representing `T` changes; the counter stays an `int`.
 
 ```mermaid
 flowchart TD
@@ -393,21 +372,21 @@ flowchart TD
     Compare --> Unknown["Unexplained or ambiguous change<br/>Reject reconstruction"]
 ```
 
-That example illustrates the comparison in `GenericLifter`. Before comparing types, it checks that both captures identify the same input and logical method, have the same IL hash and local layout, and retain valid raw snapshots. A type change only becomes a generic parameter when it points to one unique parameter position.
+`GenericLifter` first checks that both captures identify the same input and logical method, have the same IL hash and local layout, and retain valid raw snapshots. A type change becomes a generic parameter only when it points to one unique parameter position.
 
-The comparison also walks inside constructed types, arrays, fields, method arguments and locals. This lets us restore a type parameter such as `!0`, or a method parameter such as `!!0`, while leaving concrete types in place. Value-type captures help because they can expose distinctions hidden by shared reference-type code. Enum locals need care too: the runtime can describe their storage using the underlying integer type.
+The comparison walks inside constructed types, arrays, fields, method arguments and locals. That lets me restore a type parameter such as `!0`, or a method parameter such as `!!0`, while leaving concrete types alone. Value-type captures expose distinctions hidden by shared reference-type code. Enum locals are slightly annoying because the runtime can describe their storage using the underlying integer type.
 
-Getting those captures requires valid concrete type arguments. We can supply them explicitly or use a unique usable runtime observation. Framework checks the generic constraints; picking `int` for every open parameter would not satisfy them all.
+The concrete arguments still have to satisfy the generic constraints, so “just use `int` everywhere” failed quickly. I either supply them explicitly or use one unique, usable runtime observation.
 
-Even with valid arguments, we can get a different compiler handle from the one we requested. Reference types can share compiled code, and the CLR may represent them internally as `System.__Canon`. We check the exact CLR typical-method family, module, token and compatible type arguments before accepting that capture. We also cannot take `System.__Canon` from the recording and use it as an arbitrary type argument for another capture.
+Even with valid arguments, the compiler handle can differ from the one I requested. Reference types share compiled code, and the CLR may represent them internally as `System.__Canon`. I check the exact CLR typical-method family, module, token and compatible type arguments before accepting the capture; `System.__Canon` from a recording is not a free substitute for another type argument.
 
-Looking right in a decompiler is not enough to check this. The test suite executes emitted fixtures with recovered generic fields and locals using `string`, `long`, `decimal` and enum arguments. That catches a reconstruction which only works for the particular instantiation we captured.
+A decompiler can make a bad reconstruction look convincing. The test suite therefore executes emitted fixtures with recovered generic fields and locals using `string`, `long`, `decimal` and enum arguments. That caught cases which only worked for the captured instantiation.
 
 ## Making the control flow readable
 
-With valid instructions and operands, we can rebuild the method, but its control flow can still be a mess. A common pattern stores a state value and repeatedly jumps to a `switch` that selects the next block.
+A valid reconstructed method can still be miserable to read. DNGuard commonly stores a state value and repeatedly jumps to a `switch` that selects the next block.
 
-The diagram below is an illustrative dispatcher. The state assignments make the useful order A, B, then return, even though each block routes through the same switch.
+In this illustrative dispatcher, the useful order is A, B, return, even though every block routes through the same switch:
 
 ```mermaid
 flowchart LR
@@ -428,29 +407,29 @@ flowchart LR
     end
 ```
 
-To remove those detours, we need to know which values can reach each branch. `SsaCleanup` tracks the evaluation stack and eligible local variables using Static Single Assignment, or SSA, values. Each assignment gets its own identity. Where paths join, a phi value represents the incoming alternatives. If every path brings in the constant `7`, we still know the value is `7`. If the values differ, we have to keep that uncertainty.
+`SsaCleanup` removes a detour only when it can prove which value reaches the branch. It tracks the evaluation stack and eligible locals using Static Single Assignment, or SSA, values. Each assignment gets its own identity; where paths join, a phi value represents the alternatives. If every path carries `7`, the value is still known. If they differ, I leave the uncertainty alone.
 
-This matters for IL because values also travel on an evaluation stack. A comparison consumes values from that stack, and the paths entering an instruction must agree on its height. Tracking locals alone would miss half the state.
+IL also moves values on an evaluation stack. A comparison consumes those values, and paths entering an instruction must agree on stack height, so tracking locals alone misses half the state.
 
-We first remove unreachable instructions, then propagate known values through arithmetic and branches. When we can prove a branch outcome, we replace the conditional decision with the corresponding edge while preserving its stack consumption. For a pure dispatcher sequence, we can also follow the state from one incoming edge and redirect it straight to the selected block.
+The cleanup removes unreachable instructions and propagates known values through arithmetic and branches. A proven branch becomes its corresponding edge while preserving stack consumption. For a pure dispatcher sequence, it can follow the state from one incoming edge straight to the selected block.
 
-Doing that can make more instructions unreachable, so cleanup shortens branch chains, removes the newly unreachable code and repeats. It stops when nothing changes, with a limit of 64 passes. If a dispatcher's behavior cannot be determined, it stays in the output and gets reported.
+Each rewrite can expose more dead code, so cleanup shortens branch chains and repeats until nothing changes, capped at 64 passes. An unproven dispatcher stays in the output and appears in the report.
 
 ### Keeping the original behavior
 
-Simplifying arithmetic takes care: integer widths, signed and unsigned operations, shift masks and NaN comparisons all matter. An operation that would throw, such as a checked overflow, stays in place. Folding it into a successful value would remove behavior from the method.
+I had to make the arithmetic boringly exact: integer widths, signed and unsigned operations, shift masks and NaN comparisons all matter. An operation that would throw, such as a checked overflow, stays in place; folding it into a value would silently remove behavior.
 
-Calls, stores and pointer effects limit what we can assume. Once a local's address escapes, other code may change it, so we cannot keep treating it as a constant controlled only by this method. Exception handlers get their own entry states, and `leave` has to account for a possible `finally` changing locals. For bodies with exception handlers, we disable dispatcher edge specialization and branch threading.
+Calls, stores and pointer effects limit what I can assume. Once a local's address escapes, other code may change it, so it stops being a method-controlled constant. Exception handlers get their own entry states, and `leave` accounts for a possible `finally` changing locals. Bodies with exception handlers skip dispatcher edge specialization and branch threading.
 
-After analysis, the SSA values have to become valid IL again. Where eligible local versions need separate storage, cleanup creates additional locals and inserts copies on the relevant control-flow edges. It loads all source values before storing destinations so simultaneous updates, such as swapping two values, still work. Methods with exception handlers keep their original local storage locations. Existing evaluation-stack instructions also stay wherever a stack rewrite is unnecessary.
+After analysis, the SSA values have to become valid IL again. Cleanup creates locals for versions that need separate storage and inserts copies on the relevant edges. It loads every source before storing destinations so simultaneous updates, such as a swap, still work. Methods with exception handlers keep their original local locations, and existing stack instructions stay where no rewrite is needed.
 
-Stack underflow or incompatible stack heights block strict emission. A pretty control-flow graph would be of little use if we broke the method to get it.
+Stack underflow or incompatible stack heights block strict emission. A pretty graph is not worth a broken method.
 
 ## Recovering strings
 
-Readable methods are more useful when we can see their strings too. The protected assembly contains thousands of static, parameterless string getters in `ZYXDNGuarder`. For these entries, the useful result is the value returned by the runtime.
+The protected assembly also hides thousands of strings behind static, parameterless getters in `ZYXDNGuarder`. For those entries, I care about the value returned by the runtime.
 
-Here the worker does invoke the method, after checking its type, signature and stub shape. It calls the getter twice and records each returned UTF-16 value through the native probe after the call returns. If the values differ, the request fails.
+The worker checks the type, signature and stub shape, then invokes the getter twice and records both returned UTF-16 values through the native probe. A mismatch fails the request.
 
 ```mermaid
 flowchart TD
@@ -463,25 +442,25 @@ flowchart TD
     Equal -->|"No"| Fail["Fail capture"]
 ```
 
-After checking the recorded value against the raw snapshot, we replace the getter with `ldstr` and `ret`, or `ldnull` and `ret` for a null value. That lets existing calls keep referring to the same getter MethodDef, with a body we can now read directly.
+After matching the recorded value to the raw snapshot, I replace the getter with `ldstr` and `ret`, or `ldnull` and `ret`. Existing calls keep the same getter MethodDef, but its body is finally readable.
 
 ## Resolving dependencies
 
-Readable method bodies still need valid references to the libraries they call. Resolving those references means choosing the right dependency binaries. The supplied directory mixed NPOI versions, and some helper assemblies referenced types that had been merged into `Core`. Picking whichever DLL has a familiar filename can bind a call to the wrong definition.
+Dependency resolution produced another deceptively plausible failure. The supplied directory mixed NPOI versions, and some helper assemblies referenced types that had been merged into `Core`. Picking the familiar DLL name bound calls to the wrong definitions while still looking reasonable in the decompiler.
 
-A binding map makes those choices explicit through complete assembly identities, hashes and MVIDs for dependency overrides. For merged aliases, the lifter only accepts recorded unsigned references whose referenced type names all exist in the input. It also records the helper binaries that establish those relationships. The worker uses the map when loading dependencies, and emission validates the referenced modules again before importing operands.
+I made those choices explicit in a binding map containing complete assembly identities, hashes and MVIDs. For merged aliases, the lifter accepts only recorded unsigned references whose type names all exist in the input, and records the helper binaries that establish the relationship. The worker uses the map for loading; emission checks the modules again before importing operands.
 
-Each companion library gets its own inventory and payload-table analysis. We cannot assume the alias selector learned from one module will work for another.
+Each companion library gets its own inventory and payload-table analysis. The alias selector learned from one module is not assumed to work for another.
 
 ## Writing and checking the assembly
 
-We can now put the recovered methods back into an assembly. The emitter uses dnlib to load the original, replace the logical methods' bodies, import the resolved references, reconstruct local signatures and exception regions, and run cleanup.
+The emitter uses dnlib to load the original assembly, replace the logical methods' bodies, import resolved references, reconstruct local signatures and exception regions, and run cleanup.
 
-There is still a piece of DNGuard at the start of some captured bodies. Before the application instructions, a generated prologue reads a field belonging to the protector, computes its hash code and branches on the result. Leaving it in the reconstructed body carries that access to DNGuard's state into the analysis output. The emitter skips this recognized prologue so the recovered method starts at its application logic.
+Some captured bodies still begin with a piece of DNGuard: a generated prologue reads a protector field, computes its hash code and branches on the result. Leaving it there makes the analysis output depend on DNGuard's state, so the emitter skips the recognized prologue and starts at the application logic.
 
-The exact pattern takes the address of `ZYXDNGuarder.a`, constrains a call to `Object.GetHashCode` to `System.IntPtr`, and tests the result with `brtrue.s`. In this pattern, the branch target and the fall-through path through a `nop` meet at the same application instruction. The importer checks all six instructions and that target before recording the semantic entry, `IL_0014`. The emitter then replaces the initial `nop` with an unconditional branch to that entry. This is the guard bypass referred to in the reports; it only applies when the complete pattern matches.
+The pattern takes the address of `ZYXDNGuarder.a`, constrains a call to `Object.GetHashCode` to `System.IntPtr`, and tests the result with `brtrue.s`. Its branch target and fall-through path through a `nop` meet at the same application instruction. The importer checks all six instructions and that target before recording the semantic entry, `IL_0014`; the emitter replaces the initial `nop` with an unconditional branch there. The reports call this the guard bypass, and it applies only to a complete match.
 
-We also have to account for the generated entries identified earlier. For whole-inventory output, we give validated active aliases copies of their recovered originals. Decoys and unreferenced native infrastructure get explicit analysis exception bodies. Before doing that, we check reachable references in both recovered and pre-existing IL. If anything can still call an entry we intend to exclude, completion fails. Every protected entry stays in the report so we can see what happened to it.
+For whole-inventory output, I give validated active aliases copies of their recovered originals. Decoys and unreferenced native infrastructure get explicit analysis exception bodies. Before that, the lifter checks reachable references in recovered and pre-existing IL; if anything can still call an entry marked for exclusion, completion fails. Every protected entry remains in the report.
 
 ```mermaid
 flowchart TD
@@ -498,15 +477,15 @@ flowchart TD
     Match -->|"Yes"| Publish["Move into output path<br/>Write hash and verification report"]
 ```
 
-Writing a file successfully does not tell us whether we wrote the methods correctly. We reload it and compare signatures, instructions, imported operands, locals, branches, exception regions and stack metadata against the bodies we intended to emit. We normalize equivalent encodings, such as short and long branch forms, so those compare correctly. MethodDef row IDs stay the same, but we rebuild other metadata where needed. Keeping DNGuard's padded null signature rows, for example, would make the new file invalid.
+Getting dnlib to write a file felt like progress, but proved very little. The verifier reloads it and compares signatures, instructions, imported operands, locals, branches, exception regions and stack metadata with the intended bodies. It normalizes equivalent encodings such as short and long branch forms. MethodDef row IDs stay the same, but other metadata is rebuilt where needed; keeping DNGuard's padded null signature rows, for example, makes the new file invalid.
 
-Some malformed `RunHVM` probes also need minimal replacement bodies before dnlib can write the assembly. Between those replacements, the guard bypass and the marked infrastructure, my lifter makes deliberate changes for analysis. The output needs to be read with that in mind.
+Some malformed `RunHVM` probes also need minimal replacement bodies before dnlib can write the assembly. Along with the guard bypass and marked infrastructure, those are deliberate analysis-only changes and appear in the report.
 
-By default, we stop emission on reachable unresolved operands, missing locals or exception data, failed methods or invalid stacks. There are explicit partial and placeholder modes for inspecting incomplete historical captures. When we request `--require-complete`, those modes and a bounded method selection are rejected.
+Default emission stops on reachable unresolved operands, missing locals or exception data, failed methods or invalid stacks. Partial and placeholder modes exist only for inspecting incomplete historical captures; `--require-complete` rejects them and any bounded method selection.
 
 ## What's recovered
 
-The predicate from the opening now has a useful body. It is the compiler-generated `<CreateCampaignAsync>b__0` method in `RegisterController`, token `0x06001DC8`, recovered through active alias `0x06001E42`.
+The predicate from the opening is the compiler-generated `<CreateCampaignAsync>b__0` method in `RegisterController`, token `0x06001DC8`, recovered through active alias `0x06001E42`.
 
 In the protected file, its body is the same error stub:
 
@@ -514,15 +493,15 @@ In the protected file, its body is the same error stub:
 throw new Exception("Error, DNGuard Runtime library not loaded!");
 ```
 
-After resolving its operands and skipping the DNGuard prologue, the recorded IL expresses this C# body. I have named the argument `model` for readability:
+After resolving its operands and skipping the DNGuard prologue, I get this C# body. I named the argument `model` for readability:
 
 ```csharp
 return model.Name == this.platform;
 ```
 
-The capture resolves the property access to `ModelInfo.get_Name()`, the field access to `DisplayClass4_0.platform`, and the comparison to `System.String.op_Equality`. We can now see what this method does: it checks whether the model's name matches the platform stored in its closure. That is a small result, but it makes the difference between an error stub and readable application logic concrete.
+The capture resolves the property access to `ModelInfo.get_Name()`, the field access to `DisplayClass4_0.platform`, and the comparison to `System.String.op_Equality`. It is only checking whether the model name matches the platform stored in its closure. Small result, huge improvement over an error stub.
 
-For PVACreator, the recorded verification run accounts for 27,069 protected entries. That number includes all the aliases and decoys DNGuard added. Here is the breakdown showing how much application code the lifter actually recovered:
+For PVACreator, my recorded verification run accounts for 27,069 protected entries, including DNGuard's aliases and decoys:
 
 | Category | Entries | Treatment |
 | --- | ---: | --- |
@@ -533,17 +512,15 @@ For PVACreator, the recorded verification run accounts for 27,069 protected entr
 | Native VM bridge | 1 | Unreferenced infrastructure, explicitly marked |
 | **Total** | **27,069** | **Zero unaccounted entries** |
 
-The recovered package also includes `FingerPrintUI.dll`, `BotModule.dll` and `AccountProfileHelper.dll`. Across those four assemblies, the recorded checks account for 44,638 protected entries and resolve 1,316 calls between recovered modules. The recorded decompilation checks report zero type or stack warnings across all four outputs. Strict emission reports zero skipped or failed methods, operand or local placeholders, or structural reload mismatches.
+Across `PVACreator.exe`, `FingerPrintUI.dll`, `BotModule.dll` and `AccountProfileHelper.dll`, the recorded checks account for 44,638 protected entries and resolve 1,316 calls between recovered modules. The decompilation checks report zero type or stack warnings across all four outputs. Strict emission reports zero skipped or failed methods, operand or local placeholders, or structural reload mismatches.
 
-We have not recovered everything the application can call. BotModule still has 2,610 call sites into `AutoBrowserTool.dll`, which was outside the recovered package. We report those as residual protected references. That library is not included in the four-module result.
+The result has one clear boundary. `BotModule` still contains 2,610 call sites into `AutoBrowserTool.dll`, which was outside the recovered package; the reports mark them as residual protected references. The verification run covers the four reconstructed modules with 13,474 whole-inventory assertions and 144 execution, lifecycle, selector and generic assertions. It validates the recorded recovery and tested transformations, not every possible application input or a standalone production run.
 
-To check the reconstruction, the verification suite combines structural checks with controlled execution tests for cleanup and generics. The documented run records 13,474 whole-inventory assertions and 144 execution, lifecycle, selector and generic assertions. Those checks cover the recorded recovery and the tested transformations. They do not prove the entire rewritten application can run independently or behaves identically for every input.
-
-This gets me back to what I wanted at the start: opening the application in a decompiler and seeing how it works. We can now follow its recovered methods, calls, strings and exception paths without repeating the native capture each time.
+That gets me back to what I wanted at the start: I can open the application in a decompiler and follow its methods, calls, strings and exception paths without repeating the native capture every time.
 
 ## Implementation references
 
-The implementation described here is in the `dnguard` directory of `pva-research`, at revision `ba88f0a`. The recovery figures come from its `VERIFICATION.md`.
+The implementation is in the `dnguard` directory of `pva-research`, at revision `ba88f0a`. The recovery figures come from its `VERIFICATION.md`.
 
 The predicate's alias mapping, resolved operands and captured instruction sequence are recorded in `e6536f889bfb428cb3e1c37c292b51c3/_docs/dnguard-generic-deobfuscation.md`. The C# example above is a readable rendering of that recorded IL.
 
@@ -560,4 +537,4 @@ The predicate's alias mapping, resolved operands and captured instruction sequen
 | `DnGuard.Core/SsaCleanup.cs` | Stack and local analysis, control-flow cleanup |
 | `DnGuard.Core/Emitter.cs`, `Coverage.cs`, `BodyVerifier.cs` | Emission, inventory accounting and reload checks |
 
-The runtime interface is described in the [CLR JIT interface source](https://github.com/dotnet/coreclr/blob/v1.0.0/src/inc/corinfo.h), with the usual caveat that its published layout is not a substitute for validating our Framework binaries. The project uses [dnlib](https://github.com/0xd4d/dnlib/tree/v4.5.0) for assembly reconstruction and [MinHook](https://github.com/TsudaKageyu/minhook/tree/v1.3.4) for the compiler detour and instruction decoder.
+The runtime interface is described in the [CLR JIT interface source](https://github.com/dotnet/coreclr/blob/v1.0.0/src/inc/corinfo.h). The project uses [dnlib](https://github.com/0xd4d/dnlib/tree/v4.5.0) for assembly reconstruction and [MinHook](https://github.com/TsudaKageyu/minhook/tree/v1.3.4) for the compiler detour and instruction decoder.
