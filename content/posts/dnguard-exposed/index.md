@@ -282,23 +282,26 @@ The probe preserves the original compiler prologue while HVM installs itself. Th
 
 This leaves HVM's installation intact and puts my observer where HVM eventually calls the original compiler.
 
-For the pinned JIT, the saved compiler entry is `clrjit+0x7A6E0`. Its validated 16-byte prefix is:
+HVM replaces the compiler-table entry while leaving the original compiler function intact. I then use MinHook to replace that function's first five bytes with a jump to my observer:
 
 ```text
-48 89 5C 24 08 57 48 83 EC 60 48 8B 0D 5F 63 0A
+Original prefix: 48 89 5C 24 08 57 48 83 EC 60 48 8B 0D 5F 63 0A
+Detoured prefix: E9 EE 68 F7 FF 57 48 83 EC 60 48 8B 0D 5F 63 0A
+
+Before HVM:       compiler table slot 0 = clrjit+0x7A6E0
+After HVM:        compiler table slot 0 = HVMRun64+0x3C6B0
+After my detour:  compiler table slot 0 = HVMRun64+0x3C6B0
 ```
 
-`Probe.cpp::dg_initialize` checks that address and prefix, loads HVM, waits for the compiler-table entry to point into HVM, and then enables the detour. These bytes and the implementation establish the working setup; they are not a before/after recording of a failed early-hook attempt.
-
-<!-- Evidence pending: original versus patched compiler bytes, or a debugger trace, from the failed early-hook experiment. -->
+The jump displacement depends on the process layout. HVM's table entry stays in place, so protected compilation still passes through its dispatcher before reaching my observer. Installing my detour before HVM also recovered identical IL for two tested methods; I could not reproduce the earlier failure or establish that HVM rejects a patched compiler prologue.
 
 The worker resolves a method and calls `RuntimeHelpers.PrepareMethod`, so I do not need to invent arguments and invoke every application method. It runs the target's module initializer inside the first capture request because initialization can trigger useful compilations of its own. That initializer does execute target code; string getters are the other case that needs a real invocation.
 
-### Proving ownership
+### Matching the replacement body
 
 A request does not give me exclusive use of the compiler. Module initialization, nested compilation and background work can share that boundary, so each recorded body has to be bound to its request.
 
-The probe now records request, compilation, parent and thread identifiers, plus the dispatcher handle, compiler handle and method-info pointer. I accept a different compiler handle through a dispatcher relationship only when the observation belongs to the same method-info record. Shared generic code gets an additional CLR-family check. If two application bodies still match, I leave the capture failed rather than guess.
+DNGuard can hand the JIT a different method handle from the entry I requested. I match it through the dispatcher only when both observations refer to the same method-info record. Shared generic code also needs an exact CLR-family check. If two application bodies still match, capture fails.
 
 This is the admission filter in `Probe.cpp::compile`, with whitespace expanded and its generic-candidate comment shortened. `method` is the current method-info pointer; matching the module only admits a generic candidate for later validation:
 
@@ -314,25 +317,9 @@ if (!related && !candidate)
     return originalCompile(self, info, method, flags, entry, size);
 ```
 
-For example, the saved `full-generics` capture of `0x06000089` contains these fields:
+The same method can also reach the JIT with different bodies. For `0x06000089`, I captured both a 628-byte HVM body and the unchanged 11-byte metadata error stub. Both passed the CLR-family check. The worker excludes the exact stub only after seeing a distinct HVM body, so matching the method alone is not enough to identify the replacement IL.
 
-```text
-request_id:             1
-compilation_id:         5
-parent_compilation_id:  0
-thread_id:              25840
-requested_handle:      0x00007FF9886FE410
-dispatcher_handle:     0x00007FF9886FE398
-method_handle:         0x00007FF9886FE398
-typical_method_handle: 0x00007FF9886FE210
-binding_evidence:      exact CLR typical-method family
-```
-
-The requested and compiler handles differ, and the worker records why it accepted the relationship. This is one selected capture, not a timeline of other compilations; ID `5` alone says nothing about what happened in IDs 1–4.
-
-<!-- Evidence pending: a complete request/nested/background compilation timeline, including rejected observations and the final selection. -->
-
-Some `BotModule` aliases surprised me by supplying the original CLR callback table instead of HVM's proxy. The probe supports that route too, checking the table and callback addresses against the pinned `clr.dll`. CLR sometimes also compiles the unchanged metadata error stub; the worker excludes that exact stub only after seeing a distinct HVM body, and keeps the excluded snapshot as evidence.
+Some `BotModule` aliases surprised me by supplying the original CLR callback table instead of HVM's proxy. The probe supports that route too, checking the table and callback addresses against the pinned `clr.dll`.
 
 ## Recording the compiler's questions
 
